@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { deleteCookies } from "@/lib/auth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +19,6 @@ export function SignOut() {
   const router = useRouter();
 
   const handleSignOut = () => {
-    deleteCookies();
     router.push("/");
   };
 
