@@ -1,14 +1,11 @@
+"use client";
+
 import "./globals.css";
 import { bricolage } from "@/lib/fonts";
-import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import Progress from "@/components/ProgressBar";
-
-export const metadata: Metadata = {
-  title: "Passport - Driving Instructor App",
-  description: "Connect with qualified driving instructors",
-};
+import { Providers } from "@/components/providers";
 
 export default function RootLayout({
   children,
@@ -18,16 +15,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={bricolage.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Progress />
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Progress />
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
