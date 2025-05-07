@@ -47,3 +47,8 @@ Use Prisma for database access.
 - Use the @lens-protocol/react-web package for Lens Protocol React integration.
 
 - use pnpm for package manager
+
+- never update anything in the docs folder
+- use docs folder for reference and if you need any functionality from docs folder, create it in the src folder and use it from there
+- use lens-protocol-llm.txt for reference
+- please use docs even if they are in .gitignore
