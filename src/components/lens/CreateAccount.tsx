@@ -3,41 +3,76 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateProfile, useValidateHandle } from "@lens-protocol/react-web";
+import { useAccount } from "wagmi";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { client } from "@/lib/lens/client";
+import { signMessageWith } from "@lens-protocol/client/viem";
+import { useWalletClient } from "wagmi";
+import { privateKeyToAccount } from "viem/accounts";
+import { mainnet } from "@lens-protocol/client";
 
 export function CreateAccount() {
-  const [username, setUsername] = useState("");
+  const [localName, setLocalName] = useState("");
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const { address } = useAccount();
+  const { execute: validateHandle, loading: validating } = useValidateHandle();
+  const { execute: createProfile, loading: creating } = useCreateProfile();
+
+  const { data: walletClient } = useWalletClient();
+
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      setLoading(true);
       setError(null);
       setSuccess(null);
-      
-      // Simulate account creation
-      console.log('Creating account with:', { username, name, bio });
-      
-      // Simulate a successful response after a short delay
-      setTimeout(() => {
-        setSuccess(`Account creation simulation successful for username: ${username}`);
-        // Clear form
-        setUsername("");
-        setName("");
-        setBio("");
-        setLoading(false);
-      }, 1500);
-      
+
+      if (!address) {
+        setError("Wallet not connected. Please connect your wallet first.");
+        return;
+      }
+
+      // First validate the handle
+      const validity = await validateHandle({ localName });
+
+      if (validity.isFailure()) {
+        setError(validity.error.message);
+        return;
+      }
+
+      // Create the profile with real authentication
+      // Include approveSignless: true to enable signless transactions
+      const result = await createProfile({
+        localName,
+        to: address,
+        approveSignless: true,
+      });
+
+      if (result.isFailure()) {
+        setError(result.error.message);
+        return;
+      }
+
+      setSuccess(
+        `Profile created successfully: ${result.value.handle?.fullHandle}!`
+      );
+
+      // Clear form
+      setLocalName("");
+      setName("");
+      setBio("");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred while creating the account";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "An error occurred while creating the account";
       setError(errorMessage);
       console.error("Error creating account:", err);
-      setLoading(false);
     }
   };
 
@@ -58,26 +93,36 @@ export function CreateAccount() {
       )}
 
       <div className="mb-4">
-        <div className="p-4 mb-4 bg-blue-100 text-blue-700 rounded">
-          ✓ Connected to Lens Protocol (Simulation Mode)
-        </div>
-        <h3 className="text-lg font-semibold mb-2">
-          Create Your Account
-        </h3>
+        {!address ? (
+          <div className="p-4 mb-4 bg-yellow-100 text-yellow-700 rounded">
+            ⚠️ Please connect your wallet first to create a Lens profile
+          </div>
+        ) : (
+          <div className="p-4 mb-4 bg-blue-100 text-blue-700 rounded">
+            ✓ Connected with wallet: {address.slice(0, 6)}...{address.slice(-4)}
+          </div>
+        )}
+        <h3 className="text-lg font-semibold mb-2">Create Your Lens Profile</h3>
       </div>
 
       <form onSubmit={handleCreateAccount} className="space-y-4">
         <div>
-          <Label htmlFor="username">Username</Label>
-          <Input
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter username"
-            required
-          />
+          <Label htmlFor="localName">Lens Handle</Label>
+          <div className="flex space-x-2">
+            <Input
+              id="localName"
+              value={localName}
+              onChange={(e) => setLocalName(e.target.value)}
+              placeholder="yourhandle"
+              required
+              disabled={validating || creating}
+            />
+            <span className="flex items-center text-muted-foreground">
+              .lens
+            </span>
+          </div>
           <p className="text-xs text-gray-500 mt-1">
-            Username must be unique and will be your identity on Lens
+            Choose a unique handle for your Lens profile
           </p>
         </div>
 
@@ -104,10 +149,17 @@ export function CreateAccount() {
 
         <Button
           type="submit"
-          disabled={loading}
+          disabled={validating || creating || !localName || !address}
           className="w-full"
         >
-          {loading ? "Creating Account..." : "Create Account"}
+          {validating || creating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {validating ? "Validating..." : "Creating..."}
+            </>
+          ) : (
+            "Create Lens Profile"
+          )}
         </Button>
       </form>
     </div>
