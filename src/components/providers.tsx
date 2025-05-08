@@ -9,7 +9,6 @@ import {
   LensProvider,
   development,
   mainnet,
-  production,
   EnvironmentConfig,
 } from "@lens-protocol/react-web";
 import { bindings } from "@lens-protocol/wagmi";
