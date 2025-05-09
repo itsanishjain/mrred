@@ -2,20 +2,19 @@
 
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { signMessageWith } from "@lens-protocol/client/viem";
-import { PublicClient, mainnet, testnet, uri } from "@lens-protocol/client";
-import { fragments } from "@/fragments";
+import { uri } from "@lens-protocol/client";
 import { MetadataAttributeType, account } from "@lens-protocol/metadata";
-import { StorageClient } from "@lens-chain/storage-client";
-import { createAccountWithUsername } from "@lens-protocol/client/actions";
+import { immutable, StorageClient } from "@lens-chain/storage-client";
+import {
+  createAccountWithUsername,
+  fetchAccount,
+} from "@lens-protocol/client/actions";
 import { Login } from "@/components/Login";
 import { useWalletClient, useAccount } from "wagmi";
 import { getLensClient, getPublicClient } from "@/lib/lens/client";
-
-// const client = PublicClient.create({
-//   environment: mainnet,
-//   fragments,
-//   // origin: "http://localhost:3000",
-// });
+import { handleOperationWith } from "@lens-protocol/client/viem";
+import { never } from "@lens-protocol/client";
+import { chains } from "@lens-chain/sdk/viem";
 
 const App = () => {
   const privateKey = generatePrivateKey();
@@ -44,25 +43,8 @@ const App = () => {
         type: MetadataAttributeType.DATE,
         value: "1990-01-01T00:00:00Z",
       },
-      {
-        key: "enabled",
-        type: MetadataAttributeType.BOOLEAN,
-        value: "true",
-      },
-      {
-        key: "height",
-        type: MetadataAttributeType.NUMBER,
-        value: "1.65",
-      },
-      {
-        key: "settings",
-        type: MetadataAttributeType.JSON,
-        value: '{"theme": "dark"}',
-      },
     ],
   });
-
-  // console.log({ signer });
 
   const onboardUser = async () => {
     if (!walletClient) {
@@ -70,10 +52,8 @@ const App = () => {
       return;
     }
     const client = getPublicClient();
-    // if (!client.isSessionClient()) {
-    //   console.error("Client is not a session client");
-    //   return null;
-    // }
+
+    console.log("environment", client.context.environment);
 
     const authenticated = await client.login({
       onboardingUser: {
@@ -94,37 +74,42 @@ const App = () => {
 
     console.log({ sessionClient });
 
-    const { uri: lensUri } = await storageClient.uploadAsJson(metadata);
-    console.log(uri(lensUri)); // e.g., lens://4f91ca…
+    // const { uri: lensUri } = await storageClient.uploadAsJson(metadata);
+    // console.log(uri(lensUri));
+
+    const { uri: lensUri } = await storageClient.uploadFile(
+      new File([JSON.stringify(metadata)], "metadata.json", {
+        type: "application/json",
+      }),
+      { acl: immutable(chains.testnet.id) }
+    );
+
+    console.log({ lensUri });
+    console.log({ sessionClient });
+    console.log("walletClient", walletClient.account.address);
 
     const result = await createAccountWithUsername(sessionClient, {
-      username: { localName: "bestuserByBestuaer", namespace: "lens" },
+      username: { localName: `john-doe-${Date.now()}` },
       metadataUri: uri(lensUri),
-    });
+    })
+      .andThen(handleOperationWith(walletClient))
+      .andThen(sessionClient.waitForTransaction)
+      .andThen((txHash) => fetchAccount(sessionClient, { txHash }))
+      .andThen((account) => {
+        console.log("It's working....");
+        return sessionClient.switchAccount({
+          account: account?.address ?? never("Account not found"),
+        });
+      })
+      .match(
+        (result) => result,
+        (error) => {
+          throw error;
+        }
+      );
+
     console.log({ result });
   };
-
-  // await onboardUser();
-
-  // const createAccountOwner = async () => {
-  //   const accountOwner = await client.login({
-  //     accountOwner: {
-  //       app: APP_ADDRESS,
-  //       account: signer.address, // not sure what this is
-  //       owner: signer.address, // owner is the wallet address
-  //     },
-  //     signMessage: signMessageWith(signer),
-  //   });
-
-  //   console.log({ accountOwner });
-
-  //   if (accountOwner.isErr()) {
-  //     return console.error(accountOwner.error);
-  //   }
-
-  //   const sessionClient = accountOwner.value;
-  //   console.log({ sessionClient });
-  // };
 
   return (
     <>
