@@ -1,101 +1,43 @@
 "use client";
 
-import { ReactNode } from "react";
-// import { http } from "wagmi";
-import { lens, polygon, polygonAmoy } from "wagmi/chains";
-// import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  LensConfig,
-  LensProvider,
-  development,
-  mainnet,
-  EnvironmentConfig,
-} from "@lens-protocol/react-web";
-import { bindings } from "@lens-protocol/wagmi";
-import { PrivyProvider } from "@privy-io/react-auth";
-// import { WagmiProvider, createConfig } from "@privy-io/wagmi";
-import { PrivyClientConfig } from "@privy-io/react-auth";
-
-import { WagmiProvider, createConfig, http } from "wagmi";
+import { getPublicClient } from "@/lib/lens/client";
 import { chains } from "@lens-chain/sdk/viem";
+import { LensProvider } from "@lens-protocol/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
+import { JSX } from "react";
+import { createConfig, http, WagmiProvider } from "wagmi";
+import { ThemeProvider } from "next-themes";
 
-// Create wagmi config with Privy bindings
-const wagmiConfig = createConfig({
-  // chains: [polygon, polygonAmoy],
-  chains: [lens],
-  transports: {
-    // [polygon.id]: http(),
-    // [polygonAmoy.id]: http(),
-    [lens.id]: http(),
-  },
-});
-
-// Privy configuration
-const privyConfig: PrivyClientConfig = {
-  defaultChain: polygonAmoy,
-  supportedChains: [polygon, polygonAmoy],
-  embeddedWallets: {
-    createOnLogin: "users-without-wallets",
-  },
-};
-
-// Create a query client
-const queryClient = new QueryClient();
-
-// connectkit config
-
-const connectkitConfig = createConfig(
+const wagmiConfig = createConfig(
   getDefaultConfig({
-    // chains: [chains.mainnet, chains.testnet],
-    chains: [polygon, polygonAmoy],
+    walletConnectProjectId:
+      process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+    chains: [chains.mainnet],
     transports: {
-      // [chains.mainnet.id]: http(chains.mainnet.rpcUrls.default.http[0]!),
-      // [chains.testnet.id]: http(chains.testnet.rpcUrls.default.http[0]!),
-      [polygon.id]: http(),
-      [polygonAmoy.id]: http(),
+      [chains.mainnet.id]: http(),
+      [chains.testnet.id]: http(),
     },
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-    appName: "Lens Testing App",
-    appDescription: "A sample app integrating Lens Testing wallet connection.",
-    appUrl: "https://yourapp.com",
-    appIcon: "https://yourapp.com/icon.png",
+    appName: "Lens App",
+    appDescription: "Future of decentralized social",
+    appUrl: "https://totally.real.com",
+    appIcon: "https://totally.real.com/logo.png",
   })
 );
 
-// Create Lens configuration
-const lensConfig: LensConfig = {
-  environment: development,
-  bindings: bindings(connectkitConfig),
-  debug: true,
-};
-
-interface ProvidersProps {
-  children: ReactNode;
-}
-
-export function Providers({ children }: ProvidersProps) {
-  // return (
-  //   <PrivyProvider
-  //     appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
-  //     config={privyConfig}
-  //   >
-  //     <QueryClientProvider client={queryClient}>
-  //       <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
-  //         <LensProvider config={lensConfig}>{children}</LensProvider>
-  //       </WagmiProvider>
-  //     </QueryClientProvider>
-  //   </PrivyProvider>
-  // );
+export const Providers = ({ children }: { children: JSX.Element }) => {
+  const queryClient = new QueryClient();
+  const publicClient = getPublicClient();
 
   return (
-    <WagmiProvider config={connectkitConfig}>
-      <QueryClientProvider client={queryClient}>
-        <ConnectKitProvider>
-          <LensProvider config={lensConfig}>{children}</LensProvider>
-        </ConnectKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <ConnectKitProvider>
+            <LensProvider client={publicClient}>{children}</LensProvider>
+          </ConnectKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ThemeProvider>
   );
-}
+};
