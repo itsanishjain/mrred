@@ -3,11 +3,17 @@
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { uri } from "@lens-protocol/client";
-import { MetadataAttributeType, account } from "@lens-protocol/metadata";
+import {
+  MetadataAttributeType,
+  account,
+  textOnly,
+} from "@lens-protocol/metadata";
 import { immutable, StorageClient } from "@lens-chain/storage-client";
 import {
   createAccountWithUsername,
   fetchAccount,
+  post,
+  lastLoggedInAccount,
 } from "@lens-protocol/client/actions";
 import { Login } from "@/components/Login";
 import { useWalletClient, useAccount } from "wagmi";
@@ -111,13 +117,68 @@ const App = () => {
     console.log({ result });
   };
 
+  const createTextPost = async () => {
+    if (!walletClient) {
+      console.error("Wallet not connected. Please connect your wallet first.");
+      return;
+    }
+    const client = getPublicClient();
+
+    const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
+      app: APP_ADDRESS,
+      address: walletClient.account.address,
+    });
+
+    if (lastLoggedInAccountResult.isErr()) {
+      console.error(lastLoggedInAccountResult.error);
+      return;
+    }
+
+    console.log({ lastLoggedInAccountResult });
+
+    // const authenticated = await client.login({
+    //   onboardingUser: {
+    //     app: APP_ADDRESS,
+    //     wallet: walletClient.account.address,
+    //   },
+    //   signMessage: signMessageWith(walletClient),
+    // });
+
+    // console.log({ authenticated });
+
+    // if (authenticated.isErr()) {
+    //   console.error("Authentication failed", authenticated.error);
+    //   return;
+    // }
+
+    // const sessionClient = lastLoggedInAccountResult.value;
+
+    // console.log({ sessionClient });
+
+    // const metadata = textOnly({
+    //   content: `GM! GM!`,
+    // });
+
+    // const { uri: postUri } = await storageClient.uploadAsJson(metadata);
+
+    // console.log(postUri); // e.g., lens://4f91ca…
+
+    // const result = await post(sessionClient, {
+    //   contentUri: postUri,
+    // });
+    // console.log({ result });
+  };
+
   return (
     <>
       <Login />
       {isConnected && <p>Connected</p>}
       {address && <p>{address}</p>}
       {isConnected && (
-        <button onClick={onboardUser}>Create Onboard User</button>
+        <>
+          <button onClick={onboardUser}>Create Onboard User</button>
+          <button onClick={createTextPost}>Create Text Post</button>
+        </>
       )}
     </>
   );
