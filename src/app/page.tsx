@@ -1,3 +1,5 @@
+"use client";
+
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { PublicClient, mainnet, testnet, uri } from "@lens-protocol/client";
@@ -5,18 +7,23 @@ import { fragments } from "@/fragments";
 import { MetadataAttributeType, account } from "@lens-protocol/metadata";
 import { StorageClient } from "@lens-chain/storage-client";
 import { createAccountWithUsername } from "@lens-protocol/client/actions";
-import { handleOperationWith } from "@lens-protocol/client/viem";
+import { Login } from "@/components/Login";
+import { useWalletClient, useAccount } from "wagmi";
+import { getLensClient, getPublicClient } from "@/lib/lens/client";
 
-const client = PublicClient.create({
-  environment: mainnet,
-  fragments,
-  origin: "http://localhost:3000",
-});
+// const client = PublicClient.create({
+//   environment: mainnet,
+//   fragments,
+//   // origin: "http://localhost:3000",
+// });
 
-const App = async () => {
+const App = () => {
   const privateKey = generatePrivateKey();
   const signer = privateKeyToAccount(privateKey);
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
+  const { address, isConnected } = useAccount();
+
+  const { data: walletClient } = useWalletClient();
 
   const storageClient = StorageClient.create();
   console.log({ storageClient });
@@ -55,21 +62,31 @@ const App = async () => {
     ],
   });
 
-  console.log({ signer });
+  // console.log({ signer });
 
   const onboardUser = async () => {
+    if (!walletClient) {
+      console.error("Wallet not connected. Please connect your wallet first.");
+      return;
+    }
+    const client = getPublicClient();
+    // if (!client.isSessionClient()) {
+    //   console.error("Client is not a session client");
+    //   return null;
+    // }
+
     const authenticated = await client.login({
       onboardingUser: {
         app: APP_ADDRESS,
-        wallet: signer.address,
+        wallet: walletClient.account.address,
       },
-      signMessage: signMessageWith(signer),
+      signMessage: signMessageWith(walletClient),
     });
 
     console.log({ authenticated });
 
     if (authenticated.isErr()) {
-      console.error(authenticated.error);
+      console.error("Authentication failed", authenticated.error);
       return;
     }
 
@@ -78,10 +95,10 @@ const App = async () => {
     console.log({ sessionClient });
 
     const { uri: lensUri } = await storageClient.uploadAsJson(metadata);
-    console.log({ lensUri }); // e.g., lens://4f91ca…
+    console.log(uri(lensUri)); // e.g., lens://4f91ca…
 
     const result = await createAccountWithUsername(sessionClient, {
-      username: { localName: "mrredboyscum", namespace: "lens" },
+      username: { localName: "bestuserByBestuaer", namespace: "lens" },
       metadataUri: uri(lensUri),
     });
     console.log({ result });
@@ -89,27 +106,36 @@ const App = async () => {
 
   // await onboardUser();
 
-  // const accountOwner = await client.login({
-  //   accountOwner: {
-  //     account: signer.address,
-  //     app: APP_ADDRESS,
-  //     owner: signer.address,
-  //   },
-  //   signMessage: signMessageWith(signer),
-  // });
+  // const createAccountOwner = async () => {
+  //   const accountOwner = await client.login({
+  //     accountOwner: {
+  //       app: APP_ADDRESS,
+  //       account: signer.address, // not sure what this is
+  //       owner: signer.address, // owner is the wallet address
+  //     },
+  //     signMessage: signMessageWith(signer),
+  //   });
 
-  // console.log({ accountOwner });
+  //   console.log({ accountOwner });
 
-  // if (accountOwner.isErr()) {
-  //   return console.error(accountOwner.error);
-  // }
+  //   if (accountOwner.isErr()) {
+  //     return console.error(accountOwner.error);
+  //   }
 
-  // // SessionClient: { ... }
-  // const sessionClient = accountOwner.value;
+  //   const sessionClient = accountOwner.value;
+  //   console.log({ sessionClient });
+  // };
 
-  // console.log({ sessionClient });
-
-  return <>hell world</>;
+  return (
+    <>
+      <Login />
+      {isConnected && <p>Connected</p>}
+      {address && <p>{address}</p>}
+      {isConnected && (
+        <button onClick={onboardUser}>Create Onboard User</button>
+      )}
+    </>
+  );
 };
 
 export default App;

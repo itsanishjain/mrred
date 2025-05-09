@@ -9,7 +9,7 @@ import { JSX } from "react";
 import { createConfig, http, WagmiProvider } from "wagmi";
 import { ThemeProvider } from "next-themes";
 
-const wagmiConfig = createConfig(
+export const wagmiConfig = createConfig(
   getDefaultConfig({
     walletConnectProjectId:
       process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
