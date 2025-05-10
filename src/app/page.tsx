@@ -1,8 +1,7 @@
 "use client";
 
-import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { signMessageWith } from "@lens-protocol/client/viem";
-import { uri, evmAddress, txHash } from "@lens-protocol/client";
+import { uri, evmAddress } from "@lens-protocol/client";
 import {
   MetadataAttributeType,
   account,
@@ -13,9 +12,7 @@ import {
   createAccountWithUsername,
   fetchAccount,
   post,
-  lastLoggedInAccount,
   fetchPosts,
-  currentSession,
   fetchPostsForYou,
 } from "@lens-protocol/client/actions";
 import { Login } from "@/components/Login";
@@ -24,10 +21,10 @@ import { getLensClient, getPublicClient } from "@/lib/lens/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import { never } from "@lens-protocol/client";
 import { chains } from "@lens-chain/sdk/viem";
+import { Card, CardTitle } from "@/components/ui/card";
+import Terminal from "@/components/terminal/Terminal";
 
 const App = () => {
-  const privateKey = generatePrivateKey();
-  const signer = privateKeyToAccount(privateKey);
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
   const { address, isConnected } = useAccount();
 
@@ -83,9 +80,6 @@ const App = () => {
 
     console.log({ sessionClient });
 
-    // const { uri: lensUri } = await storageClient.uploadAsJson(metadata);
-    // console.log(uri(lensUri));
-
     const { uri: lensUri } = await storageClient.uploadFile(
       new File([JSON.stringify(metadata)], "metadata.json", {
         type: "application/json",
@@ -132,40 +126,6 @@ const App = () => {
       console.error("Public client");
       return;
     }
-
-    // const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
-    //   app: evmAddress(APP_ADDRESS),
-    //   address: evmAddress(walletClient.account.address),
-    // });
-
-    // if (lastLoggedInAccountResult.isErr()) {
-    //   console.error(lastLoggedInAccountResult.error);
-    //   return;
-    // }
-
-    // console.log({ lastLoggedInAccountResult });
-
-    // const account = lastLoggedInAccountResult.value;
-
-    // const authenticated = await client.login({
-    //   accountOwner: {
-    //     app: APP_ADDRESS,
-    //     account: account?.address ?? never("Account not found"),
-    //     owner: walletClient.account.address,
-    //   },
-    //   signMessage: signMessageWith(walletClient),
-    // });
-
-    // console.log({ authenticated });
-
-    // if (authenticated.isErr()) {
-    //   console.error("Authentication failed", authenticated.error);
-    //   return;
-    // }
-
-    // const sessionClient = authenticated.value;
-
-    console.log({ sessionClient });
 
     const metadata = textOnly({
       content: `MOM IS MOM`,
@@ -240,73 +200,11 @@ const App = () => {
 
       console.log({ myPosts });
     }
-
-    // const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
-    //   app: evmAddress(APP_ADDRESS),
-    //   address: evmAddress(walletClient.account.address),
-    // });
-
-    // if (lastLoggedInAccountResult.isErr()) {
-    //   console.error(lastLoggedInAccountResult.error);
-    //   return;
-    // }
-
-    // console.log({ lastLoggedInAccountResult });
-
-    // const account = lastLoggedInAccountResult.value;
-
-    // console.log("the account", account);
-
-    // const authenticated = await client.login({
-    //   accountOwner: {
-    //     app: APP_ADDRESS,
-    //     account: account?.address ?? never("Account not found"),
-    //     owner: walletClient.account.address,
-    //   },
-    //   signMessage: signMessageWith(walletClient),
-    // });
-
-    // console.log({ authenticated });
-
-    // if (authenticated.isErr()) {
-    //   console.error("Authentication failed", authenticated.error);
-    //   return;
-    // }
-
-    // const sessionClient = authenticated.value;
-
-    // console.log({ sessionClient });
-
-    // console.log(">>>>", walletClient.account.address);
-
-    // const posts = await fetchPosts(client, {
-    //   filter: {
-    //     authors: [walletClient.account.address ?? never("Account not found")],
-    //   },
-    // });
-    // console.log({ posts });
-
-    // if (posts.isErr()) {
-    //   return console.error(posts.error);
-    // }
-
-    // // items: Array<AnyPost>
-    // const { items, pageInfo } = posts.value;
-    // console.log({ items, pageInfo });
   };
 
   return (
     <>
-      <Login />
-      {isConnected && <p>Connected</p>}
-      {address && <p>{address}</p>}
-      {isConnected && (
-        <>
-          <button onClick={onboardUser}>Create Onboard User</button>
-          <button onClick={createTextPost}>Create Text Post</button>
-          <button onClick={fetchUserPosts}>Fetch User Posts</button>
-        </>
-      )}
+      <Terminal />
     </>
   );
 };

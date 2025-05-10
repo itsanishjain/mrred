@@ -12,8 +12,6 @@ const publicClient = PublicClient.create({
 });
 
 export const getPublicClient = () => {
-  console.log("env.NEXT_PUBLIC_ENVIRONMENT", env.NEXT_PUBLIC_ENVIRONMENT);
-  console.log({ isServer });
   return publicClient;
 };
 

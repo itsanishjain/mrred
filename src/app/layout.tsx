@@ -1,11 +1,10 @@
-"use client";
-
 import "./globals.css";
 import { bricolage } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import Progress from "@/components/ProgressBar";
 import { Providers } from "@/components/providers";
+import "@/styles/terminal.css";
 
 export default function RootLayout({
   children,
@@ -18,7 +17,7 @@ export default function RootLayout({
         <Providers>
           <ThemeProvider
             attribute="class"
-            defaultTheme="light"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
           >
