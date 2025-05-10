@@ -23,6 +23,7 @@ import { never } from "@lens-protocol/client";
 import { chains } from "@lens-chain/sdk/viem";
 import { Card, CardTitle } from "@/components/ui/card";
 import Terminal from "@/components/terminal/Terminal";
+import { Button } from "@/components/ui/button";
 
 const App = () => {
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
@@ -148,18 +149,13 @@ const App = () => {
     console.log("Transaction confirmed");
   };
 
-  const fetchUserPosts = async () => {
+  const fetchUserPostsForYou = async () => {
     if (!walletClient) {
       console.error("Wallet not connected. Please connect your wallet first.");
       return;
     }
     const client = getPublicClient();
     const lensClient = await getLensClient();
-
-    const hash =
-      "0x579cfaaba07d2b8e6779a418907e5e17e9d521edb123f602495a95a94a3cd209";
-
-    console.log({ lensClient });
 
     if (lensClient.isPublicClient()) {
       console.log("Public client");
@@ -176,8 +172,20 @@ const App = () => {
     }
 
     console.log({ result });
+  };
 
-    // fetch my posts
+  const fetchUserPosts = async () => {
+    if (!walletClient) {
+      console.error("Wallet not connected. Please connect your wallet first.");
+      return;
+    }
+    const client = getPublicClient();
+    const lensClient = await getLensClient();
+
+    if (lensClient.isPublicClient()) {
+      console.log("Public client");
+      return;
+    }
 
     const authenitcateUser = lensClient.getAuthenticatedUser();
 
@@ -202,7 +210,19 @@ const App = () => {
 
   return (
     <>
-      <Terminal onboardUser={onboardUser} />
+      <Terminal 
+        onboardUser={onboardUser} 
+        createTextPost={createTextPost}
+        fetchUserPosts={fetchUserPosts}
+        fetchUserPostsForYou={fetchUserPostsForYou}
+      />
+
+      {/* <div className="flex gap-2 justify-center items-center h-screen">
+        <Button onClick={onboardUser}>Onboard User</Button>
+        <Button onClick={createTextPost}>Create Post</Button>
+        <Button onClick={fetchUserPosts}>Fetch Posts</Button>
+        <Button onClick={fetchUserPostsForYou}>Fetch Posts For You</Button>
+      </div> */}
     </>
   );
 };
