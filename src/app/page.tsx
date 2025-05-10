@@ -168,17 +168,26 @@ const App = () => {
     console.log({ sessionClient });
 
     const metadata = textOnly({
-      content: `HOLA MUNDO`,
+      content: `MOM IS MOM`,
     });
 
     const { uri: postUri } = await storageClient.uploadAsJson(metadata);
 
     console.log(postUri);
 
+    console.log("Posting... credirtals", sessionClient.getCredentials());
+    console.log(
+      "Posting... authenitcate",
+      sessionClient.getAuthenticatedUser()
+    );
+
     const result = await post(sessionClient, {
       contentUri: postUri,
-    });
+    }).andThen(handleOperationWith(walletClient));
+
     console.log({ result });
+
+    console.log("Transaction confirmed");
   };
 
   const fetchUserPosts = async () => {
@@ -194,6 +203,11 @@ const App = () => {
 
     console.log({ lensClient });
 
+    if (lensClient.isPublicClient()) {
+      console.log("Public client");
+      return;
+    }
+
     const result = await fetchPostsForYou(client, {
       account: evmAddress(walletClient.account.address),
       shuffle: true, // optional, shuffle the results
@@ -207,17 +221,25 @@ const App = () => {
 
     // fetch my posts
 
-    const myPosts = await fetchPosts(client, {
-      filter: {
-        authors: [evmAddress(walletClient.account.address)],
-      },
-    });
+    const authenitcateUser = lensClient.getAuthenticatedUser();
 
-    if (myPosts.isErr()) {
-      return console.error(myPosts.error);
+    if (authenitcateUser.isErr()) {
+      return;
     }
 
-    console.log({ myPosts });
+    if (authenitcateUser) {
+      const myPosts = await fetchPosts(client, {
+        filter: {
+          authors: [authenitcateUser.value.address],
+        },
+      });
+
+      if (myPosts.isErr()) {
+        return console.error(myPosts.error);
+      }
+
+      console.log({ myPosts });
+    }
 
     // const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
     //   app: evmAddress(APP_ADDRESS),
