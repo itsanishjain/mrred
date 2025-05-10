@@ -2,7 +2,7 @@
 
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { signMessageWith } from "@lens-protocol/client/viem";
-import { uri, evmAddress } from "@lens-protocol/client";
+import { uri, evmAddress, txHash } from "@lens-protocol/client";
 import {
   MetadataAttributeType,
   account,
@@ -14,6 +14,9 @@ import {
   fetchAccount,
   post,
   lastLoggedInAccount,
+  fetchPosts,
+  currentSession,
+  fetchPostsForYou,
 } from "@lens-protocol/client/actions";
 import { Login } from "@/components/Login";
 import { useWalletClient, useAccount } from "wagmi";
@@ -122,46 +125,50 @@ const App = () => {
       console.error("Wallet not connected. Please connect your wallet first.");
       return;
     }
-    const client = getPublicClient();
+    // const client = getPublicClient();
+    const sessionClient = await getLensClient();
 
-    const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
-      app: evmAddress(APP_ADDRESS),
-      address: evmAddress(walletClient.account.address),
-    });
-
-    if (lastLoggedInAccountResult.isErr()) {
-      console.error(lastLoggedInAccountResult.error);
+    if (sessionClient.isPublicClient()) {
+      console.error("Public client");
       return;
     }
 
-    console.log({ lastLoggedInAccountResult });
+    // const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
+    //   app: evmAddress(APP_ADDRESS),
+    //   address: evmAddress(walletClient.account.address),
+    // });
 
-    const account = lastLoggedInAccountResult.value;
+    // if (lastLoggedInAccountResult.isErr()) {
+    //   console.error(lastLoggedInAccountResult.error);
+    //   return;
+    // }
 
-    console.log("the account", account);
+    // console.log({ lastLoggedInAccountResult });
 
-    const authenticated = await client.login({
-      accountOwner: {
-        app: APP_ADDRESS,
-        account: account?.address ?? never("Account not found"),
-        owner: walletClient.account.address,
-      },
-      signMessage: signMessageWith(walletClient),
-    });
+    // const account = lastLoggedInAccountResult.value;
 
-    console.log({ authenticated });
+    // const authenticated = await client.login({
+    //   accountOwner: {
+    //     app: APP_ADDRESS,
+    //     account: account?.address ?? never("Account not found"),
+    //     owner: walletClient.account.address,
+    //   },
+    //   signMessage: signMessageWith(walletClient),
+    // });
 
-    if (authenticated.isErr()) {
-      console.error("Authentication failed", authenticated.error);
-      return;
-    }
+    // console.log({ authenticated });
 
-    const sessionClient = authenticated.value;
+    // if (authenticated.isErr()) {
+    //   console.error("Authentication failed", authenticated.error);
+    //   return;
+    // }
+
+    // const sessionClient = authenticated.value;
 
     console.log({ sessionClient });
 
     const metadata = textOnly({
-      content: `GM! GM!`,
+      content: `HOLA MUNDO`,
     });
 
     const { uri: postUri } = await storageClient.uploadAsJson(metadata);
@@ -174,6 +181,98 @@ const App = () => {
     console.log({ result });
   };
 
+  const fetchUserPosts = async () => {
+    if (!walletClient) {
+      console.error("Wallet not connected. Please connect your wallet first.");
+      return;
+    }
+    const client = getPublicClient();
+    const lensClient = await getLensClient();
+
+    const hash =
+      "0x579cfaaba07d2b8e6779a418907e5e17e9d521edb123f602495a95a94a3cd209";
+
+    console.log({ lensClient });
+
+    const result = await fetchPostsForYou(client, {
+      account: evmAddress(walletClient.account.address),
+      shuffle: true, // optional, shuffle the results
+    });
+
+    if (result.isErr()) {
+      return console.error(result.error);
+    }
+
+    console.log({ result });
+
+    // fetch my posts
+
+    const myPosts = await fetchPosts(client, {
+      filter: {
+        authors: [evmAddress(walletClient.account.address)],
+      },
+    });
+
+    if (myPosts.isErr()) {
+      return console.error(myPosts.error);
+    }
+
+    console.log({ myPosts });
+
+    // const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
+    //   app: evmAddress(APP_ADDRESS),
+    //   address: evmAddress(walletClient.account.address),
+    // });
+
+    // if (lastLoggedInAccountResult.isErr()) {
+    //   console.error(lastLoggedInAccountResult.error);
+    //   return;
+    // }
+
+    // console.log({ lastLoggedInAccountResult });
+
+    // const account = lastLoggedInAccountResult.value;
+
+    // console.log("the account", account);
+
+    // const authenticated = await client.login({
+    //   accountOwner: {
+    //     app: APP_ADDRESS,
+    //     account: account?.address ?? never("Account not found"),
+    //     owner: walletClient.account.address,
+    //   },
+    //   signMessage: signMessageWith(walletClient),
+    // });
+
+    // console.log({ authenticated });
+
+    // if (authenticated.isErr()) {
+    //   console.error("Authentication failed", authenticated.error);
+    //   return;
+    // }
+
+    // const sessionClient = authenticated.value;
+
+    // console.log({ sessionClient });
+
+    // console.log(">>>>", walletClient.account.address);
+
+    // const posts = await fetchPosts(client, {
+    //   filter: {
+    //     authors: [walletClient.account.address ?? never("Account not found")],
+    //   },
+    // });
+    // console.log({ posts });
+
+    // if (posts.isErr()) {
+    //   return console.error(posts.error);
+    // }
+
+    // // items: Array<AnyPost>
+    // const { items, pageInfo } = posts.value;
+    // console.log({ items, pageInfo });
+  };
+
   return (
     <>
       <Login />
@@ -183,6 +282,7 @@ const App = () => {
         <>
           <button onClick={onboardUser}>Create Onboard User</button>
           <button onClick={createTextPost}>Create Text Post</button>
+          <button onClick={fetchUserPosts}>Fetch User Posts</button>
         </>
       )}
     </>
