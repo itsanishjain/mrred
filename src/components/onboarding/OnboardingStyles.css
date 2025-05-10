@@ -1,0 +1,451 @@
+/* Onboarding Styles */
+
+.onboarding-container {
+  background-color: #000;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.onboarding-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.onboarding-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 0%,
+    rgba(0, 0, 0, 0.4) 80%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.onboarding-terminal {
+  width: 100%;
+  height: 100vh;
+  background-color: #0a0a0a;
+  border-top: 2px solid #ff0000;
+  border-bottom: 2px solid #ff0000;
+  overflow: hidden;
+  position: relative;
+  z-index: 3;
+}
+
+.terminal-header {
+  background-color: #1a0000;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ff0000;
+}
+
+.terminal-title {
+  color: #ff0000;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.minimize {
+  background-color: #995500;
+}
+
+.maximize {
+  background-color: #559900;
+}
+
+.close {
+  background-color: #990000;
+}
+
+.terminal-body {
+  padding: 40px;
+  height: calc(100% - 41px);
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boot-sequence {
+  margin-bottom: 30px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.boot-line {
+  margin-bottom: 10px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeIn 0.5s forwards;
+}
+
+.boot-line.delay-1 { animation-delay: 0.5s; }
+.boot-line.delay-2 { animation-delay: 1s; }
+.boot-line.delay-3 { animation-delay: 1.5s; }
+.boot-line.delay-4 { animation-delay: 2s; }
+.boot-line.delay-5 { animation-delay: 2.5s; }
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.warning-text {
+  color: #ff0000;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+}
+
+.success-text {
+  color: #00ff00;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+}
+
+.loading-bar {
+  height: 20px;
+  background-color: #1a1a1a;
+  border: 1px solid #ff0000;
+  margin: 10px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-bar-progress {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #ff0000 0%,
+    #ff3300 50%,
+    #ff0000 100%
+  );
+  background-size: 200% 100%;
+  animation: loadingBarAnimation 2s linear infinite;
+  width: 0%;
+  transition: width 3s ease-in-out;
+}
+
+.loading-bar.active .loading-bar-progress {
+  width: 100%;
+}
+
+@keyframes loadingBarAnimation {
+  0% { background-position: 0% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.connect-section, .register-section, .complete-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  margin-top: 30px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.connect-section.active, .register-section.active, .complete-section.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-header {
+  font-size: 1.5rem;
+  color: #ff0000;
+  margin-bottom: 20px;
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+  border-bottom: 1px solid #ff0000;
+  padding-bottom: 10px;
+}
+
+.section-content {
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .section-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+.action-button {
+  background-color: #1a0000;
+  color: #ff0000;
+  border: 1px solid #ff0000;
+  padding: 16px 24px;
+  font-family: 'Courier New', monospace;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 500px;
+  margin: 30px auto 0;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.action-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 0, 0, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.action-button:hover {
+  background-color: #300;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.action-button:hover::before {
+  left: 100%;
+}
+
+.action-button:disabled {
+  background-color: #1a1a1a;
+  color: #666;
+  border-color: #666;
+  cursor: not-allowed;
+}
+
+.action-button:disabled::before {
+  display: none;
+}
+
+/* Removed glitch effect for better readability */
+.glitch {
+  position: relative;
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+/* Removed flicker effect for better readability */
+.flicker {
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+.classified {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  color: rgba(255, 0, 0, 0.1);
+  font-size: 8rem;
+  font-weight: bold;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.biometric-scan {
+  width: 100%;
+  height: 300px;
+  border: 2px solid #ff0000;
+  position: relative;
+  overflow: hidden;
+  grid-column: 1;
+}
+
+.scan-content {
+  grid-column: 2;
+}
+
+@media (max-width: 768px) {
+  .biometric-scan {
+    height: 200px;
+    margin-bottom: 20px;
+    grid-column: auto;
+  }
+  
+  .scan-content {
+    grid-column: auto;
+  }
+}
+
+.biometric-scan::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #ff0000;
+  animation: scanLine 2s linear infinite;
+  box-shadow: 0 0 10px #ff0000;
+}
+
+.biometric-scan::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(0deg, transparent 24%, rgba(255, 0, 0, .3) 25%, rgba(255, 0, 0, .3) 26%, transparent 27%, transparent 74%, rgba(255, 0, 0, .3) 75%, rgba(255, 0, 0, .3) 76%, transparent 77%, transparent),
+    linear-gradient(90deg, transparent 24%, rgba(255, 0, 0, .3) 25%, rgba(255, 0, 0, .3) 26%, transparent 27%, transparent 74%, rgba(255, 0, 0, .3) 75%, rgba(255, 0, 0, .3) 76%, transparent 77%, transparent);
+  background-size: 50px 50px;
+}
+
+@keyframes scanLine {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+.status-text {
+  font-size: 0.9rem;
+  margin-top: 10px;
+  color: #999;
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.progress-indicator {
+  display: flex;
+  justify-content: space-between;
+  margin: 30px 0;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.progress-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.progress-step::before {
+  content: "";
+  height: 1px;
+  width: 100%;
+  background-color: #333;
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  z-index: 1;
+}
+
+.progress-step:last-child::before {
+  display: none;
+}
+
+.progress-step-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #1a0000;
+  border: 1px solid #ff0000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.progress-step.active .progress-step-circle {
+  background-color: #ff0000;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+}
+
+.progress-step.completed .progress-step-circle {
+  background-color: #300;
+}
+
+.progress-step-label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.progress-step.active .progress-step-label {
+  color: #ff0000;
+}
+
+.progress-step.completed .progress-step-label {
+  color: #999;
+}
+
+.error-message {
+  color: #ff0000;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .onboarding-terminal {
+    width: 95%;
+    height: 90vh;
+  }
+  
+  .section-header {
+    font-size: 1.2rem;
+  }
+  
+  .classified {
+    font-size: 4rem;
+  }
+}
