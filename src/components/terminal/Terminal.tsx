@@ -11,8 +11,8 @@ const Terminal: React.FC = () => {
   const [poweringUp, setPoweringUp] = useState(true);
 
   const typewriterSound = new Howl({
-    src: ["https://assets.mixkit.co/active_storage/sfx/2400/2400-preview.mp3"],
-    volume: 0.3,
+    src: ["/assets/typewriter.wav"],
+    volume: 0.1,
     sprite: {
       type: [0, 100],
     },
@@ -44,7 +44,6 @@ const Terminal: React.FC = () => {
 
   return (
     <div className={`terminal-container ${poweringUp ? "powering-up" : ""}`}>
-      <div className="scan-lines"></div>
       <div className="terminal-content">
         <div className="terminal-header">
           <div className="terminal-title">MR.RED TERMINAL v3.0</div>
@@ -65,6 +64,7 @@ const Terminal: React.FC = () => {
                 className="intro-line"
                 onComplete={intro1Completed}
                 onType={() => typewriterSound.play("type")}
+                showCursor={!showIntro2}
               />
             )}
             {showIntro2 && (
@@ -75,6 +75,7 @@ const Terminal: React.FC = () => {
                 className="intro-line"
                 onComplete={intro2Completed}
                 onType={() => typewriterSound.play("type")}
+                showCursor={!showIntro3}
               />
             )}
             {showIntro3 && (
@@ -85,6 +86,7 @@ const Terminal: React.FC = () => {
                 onComplete={intro3Completed}
                 className="intro-line-2"
                 onType={() => typewriterSound.play("type")}
+                showCursor={!showOptions}
               />
             )}
           </div>
@@ -97,6 +99,7 @@ const Terminal: React.FC = () => {
                   speed={50}
                   className="options-prompt"
                   onType={() => typewriterSound.play("type")}
+                  showCursor={true}
                 />
               </div>
               <div className="menu-options">

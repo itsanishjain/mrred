@@ -20,8 +20,8 @@ const MenuOption: React.FC<MenuOptionProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
-      <span className="command">{command}</span>
-      <span className="description">{description}</span>
+      <div className="command">{command}</div>
+      <div className="description">{description}</div>
     </div>
   );
 };

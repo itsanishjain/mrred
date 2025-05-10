@@ -7,6 +7,7 @@ interface TypingTextProps {
   className?: string;
   startDelay?: number;
   onType?: () => void;
+  showCursor?: boolean;
 }
 
 const TypingText: React.FC<TypingTextProps> = ({
@@ -16,6 +17,7 @@ const TypingText: React.FC<TypingTextProps> = ({
   className = "",
   startDelay = 0,
   onType,
+  showCursor = true,
 }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,7 +50,7 @@ const TypingText: React.FC<TypingTextProps> = ({
   return (
     <div className={`${className} typing-text`}>
       {displayedText}
-      <span className="cursor"></span>
+      {showCursor && <span className="cursor"></span>}
     </div>
   );
 };
