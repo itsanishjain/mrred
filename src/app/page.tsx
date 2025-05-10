@@ -31,8 +31,6 @@ const App = () => {
   const { data: walletClient } = useWalletClient();
 
   const storageClient = StorageClient.create();
-  console.log({ storageClient });
-
   const metadata = account({
     name: "Jane Doe",
     bio: "I am a photographer based in New York City.",
@@ -204,7 +202,7 @@ const App = () => {
 
   return (
     <>
-      <Terminal />
+      <Terminal onboardUser={onboardUser} />
     </>
   );
 };

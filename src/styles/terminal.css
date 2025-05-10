@@ -164,6 +164,62 @@
   animation: fadeIn 0.5s forwards;
 }
 
+/* Login Container */
+.login-container {
+  margin-top: 3rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-header {
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+  border-bottom: 2px solid rgba(255, 35, 35, 0.5);
+  padding-bottom: 1rem;
+  position: relative;
+  width: 100%;
+  text-align: center;
+}
+
+.login-box {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 0, 0, 0.9) 0%,
+    rgba(50, 0, 0, 0.8) 100%
+  );
+  border: 1px solid rgba(255, 35, 35, 0.3);
+  border-radius: 8px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+}
+
+.back-button {
+  background-color: #330000;
+  color: #FF2323;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 35, 35, 0.5);
+  margin-top: 1rem;
+}
+
+.back-button:hover {
+  background-color: #660000;
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(255, 35, 35, 0.5);
+}
+
 /* Options Container */
 .options-container {
   margin-top: 3rem;
