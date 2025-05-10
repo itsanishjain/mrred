@@ -2,7 +2,7 @@
 
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { signMessageWith } from "@lens-protocol/client/viem";
-import { uri } from "@lens-protocol/client";
+import { uri, evmAddress } from "@lens-protocol/client";
 import {
   MetadataAttributeType,
   account,
@@ -125,8 +125,8 @@ const App = () => {
     const client = getPublicClient();
 
     const lastLoggedInAccountResult = await lastLoggedInAccount(client, {
-      app: APP_ADDRESS,
-      address: walletClient.account.address,
+      app: evmAddress(APP_ADDRESS),
+      address: evmAddress(walletClient.account.address),
     });
 
     if (lastLoggedInAccountResult.isErr()) {
@@ -136,37 +136,42 @@ const App = () => {
 
     console.log({ lastLoggedInAccountResult });
 
-    // const authenticated = await client.login({
-    //   onboardingUser: {
-    //     app: APP_ADDRESS,
-    //     wallet: walletClient.account.address,
-    //   },
-    //   signMessage: signMessageWith(walletClient),
-    // });
+    const account = lastLoggedInAccountResult.value;
 
-    // console.log({ authenticated });
+    console.log("the account", account);
 
-    // if (authenticated.isErr()) {
-    //   console.error("Authentication failed", authenticated.error);
-    //   return;
-    // }
+    const authenticated = await client.login({
+      accountOwner: {
+        app: APP_ADDRESS,
+        account: account?.address ?? never("Account not found"),
+        owner: walletClient.account.address,
+      },
+      signMessage: signMessageWith(walletClient),
+    });
 
-    // const sessionClient = lastLoggedInAccountResult.value;
+    console.log({ authenticated });
 
-    // console.log({ sessionClient });
+    if (authenticated.isErr()) {
+      console.error("Authentication failed", authenticated.error);
+      return;
+    }
 
-    // const metadata = textOnly({
-    //   content: `GM! GM!`,
-    // });
+    const sessionClient = authenticated.value;
 
-    // const { uri: postUri } = await storageClient.uploadAsJson(metadata);
+    console.log({ sessionClient });
 
-    // console.log(postUri); // e.g., lens://4f91ca…
+    const metadata = textOnly({
+      content: `GM! GM!`,
+    });
 
-    // const result = await post(sessionClient, {
-    //   contentUri: postUri,
-    // });
-    // console.log({ result });
+    const { uri: postUri } = await storageClient.uploadAsJson(metadata);
+
+    console.log(postUri);
+
+    const result = await post(sessionClient, {
+      contentUri: postUri,
+    });
+    console.log({ result });
   };
 
   return (
