@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateProfile, useValidateHandle } from "@lens-protocol/react-web";
 import { useAccount } from "wagmi";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { client } from "@/lib/lens/client";
+import { getPublicClient } from "@/lib/lens/client";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { useWalletClient } from "wagmi";
 import { privateKeyToAccount } from "viem/accounts";
