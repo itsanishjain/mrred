@@ -17,15 +17,19 @@ import {
 } from "@lens-protocol/client/actions";
 import { Login } from "@/components/Login";
 import { useWalletClient, useAccount } from "wagmi";
+import { useState, useEffect } from "react";
 import { getLensClient, getPublicClient } from "@/lib/lens/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import { never } from "@lens-protocol/client";
 import { chains } from "@lens-chain/sdk/viem";
 import { Card, CardTitle } from "@/components/ui/card";
 import Terminal from "@/components/terminal/Terminal";
+import Onboarding from "@/components/onboarding/Onboarding";
 import { Button } from "@/components/ui/button";
 
 const App = () => {
+  // State to track whether to show onboarding or terminal
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
   const { address, isConnected } = useAccount();
 
@@ -208,15 +212,41 @@ const App = () => {
     }
   };
 
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const client = getPublicClient();
+        const resumed = await client.resumeSession();
+        if (resumed.isOk()) {
+          // User is authenticated, show Terminal
+          setShowOnboarding(false);
+        } else {
+          // User is not authenticated, show Onboarding
+          setShowOnboarding(true);
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setShowOnboarding(true);
+      }
+    };
+
+    checkAuthentication();
+  }, []);
+
   return (
     <>
-      <Terminal 
-        onboardUser={onboardUser} 
-        createTextPost={createTextPost}
-        fetchUserPosts={fetchUserPosts}
-        fetchUserPostsForYou={fetchUserPostsForYou}
-      />
+      {showOnboarding ? (
+        <Onboarding onboardUser={onboardUser} />
+      ) : (
+        <Terminal 
+          createTextPost={createTextPost}
+          fetchUserPosts={fetchUserPosts}
+          fetchUserPostsForYou={fetchUserPostsForYou}
+        />
+      )}
 
+      {/* Debug buttons - can be removed in production */}
       {/* <div className="flex gap-2 justify-center items-center h-screen">
         <Button onClick={onboardUser}>Onboard User</Button>
         <Button onClick={createTextPost}>Create Post</Button>

@@ -5,13 +5,9 @@ import { Howl } from "howler";
 import { useAccount } from "wagmi";
 import TypingText from "./TypingText";
 import MenuOption from "./MenuOption";
-import { Login } from "@/components/Login";
-import { getPublicClient } from "@/lib/lens/client";
-import { ConnectKitButton } from "connectkit";
 import PostList from "./PostList";
 
 interface TerminalProps {
-  onboardUser?: () => Promise<void>;
   createTextPost?: () => Promise<void>;
   fetchUserPosts?: () => Promise<void>;
   fetchUserPostsForYou?: () => Promise<void>;
@@ -45,19 +41,15 @@ interface PostData {
 }
 
 const Terminal: React.FC<TerminalProps> = ({ 
-  onboardUser,
   createTextPost,
   fetchUserPosts,
   fetchUserPostsForYou
- }) => {
+}) => {
   const [showIntro1, setShowIntro1] = useState(true);
   const [showIntro2, setShowIntro2] = useState(false);
   const [showIntro3, setShowIntro3] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [poweringUp, setPoweringUp] = useState(true);
-  const [showLogin, setShowLogin] = useState(false);
-  const [hasLensProfile, setHasLensProfile] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [commandMode, setCommandMode] = useState(false);
   const [currentCommand, setCurrentCommand] = useState("");
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -72,43 +64,10 @@ const Terminal: React.FC<TerminalProps> = ({
 
   const typewriterSound = new Howl({
     src: ["/assets/typewriter.wav"],
-    // volume: 0.1,
     sprite: {
       type: [0, 100],
     },
   });
-
-  // Check if user has a Lens profile
-  useEffect(() => {
-    const checkLensProfile = async () => {
-      if (isConnected && address) {
-        try {
-          setIsLoading(true);
-          const client = getPublicClient();
-
-          // Use the client to check if the user has a profile
-          // This is a simpler approach that just checks if the user is authenticated
-          const resumed = await client.resumeSession();
-          if (resumed.isOk()) {
-            // If session can be resumed, user likely has a profile
-            setHasLensProfile(true);
-          } else {
-            setHasLensProfile(false);
-          }
-        } catch (error) {
-          console.error("Error checking Lens profile:", error);
-          setHasLensProfile(false);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setHasLensProfile(false);
-        setIsLoading(false);
-      }
-    };
-
-    checkLensProfile();
-  }, [isConnected, address]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -133,19 +92,7 @@ const Terminal: React.FC<TerminalProps> = ({
   const handleOptionClick = (option: string) => {
     console.log(`PROCESSING REQUEST: ${option.toUpperCase()}`);
 
-    if (option === "register_existence") {
-      if (!isConnected) {
-        // Show login component if user is not connected
-        setShowLogin(true);
-      } else if (!hasLensProfile && onboardUser) {
-        // If user is connected, doesn't have a profile, and onboardUser function is provided, call it
-        onboardUser();
-      } else if (hasLensProfile) {
-        // If user already has a profile, show a message or redirect
-        console.log("User already has a Lens profile");
-        // You could add additional state and UI for this case
-      }
-    } else if (option === "command_line") {
+    if (option === "command_line") {
       // Enter command line mode
       setCommandMode(true);
       setTimeout(() => {
@@ -162,7 +109,6 @@ const Terminal: React.FC<TerminalProps> = ({
     "fetch-posts": "Fetch your posts",
     "create-post": "Create a new post",
     "fetch-feed": "Fetch your feed for you",
-    "register": "Register a new Lens Protocol profile",
     exit: "Exit command mode"
   };
 
@@ -215,7 +161,6 @@ const Terminal: React.FC<TerminalProps> = ({
           break;
         case "ls":
           output = "Available options:\n" +
-            "  register_existence - Submit yourself to the digital registry\n" +
             "  consume_propaganda - Access your daily dose of approved information\n" +
             "  report_dissidence - Report unauthorized thoughts and behavior\n" +
             "  social_compliance - View your social credit score\n" +
@@ -296,21 +241,6 @@ const Terminal: React.FC<TerminalProps> = ({
           }
           break;
           
-        case "register":
-          if (onboardUser) {
-            setCommandOutput("REGISTERING NEW LENS PROTOCOL PROFILE...\nPlease wait while we process your request.");
-            try {
-              await onboardUser();
-              output = "PROFILE REGISTRATION COMPLETE!\nYour digital identity has been permanently recorded.";
-            } catch (error) {
-              output = `REGISTRATION ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`;
-            }
-          } else {
-            output = "REGISTRATION INTERFACE:\n" +
-              "ERROR: Registration function not available. Please connect your wallet first.";
-          }
-          break;
-          
         case "exit":
           setCommandMode(false);
           setProcessingCommand(false);
@@ -354,46 +284,57 @@ const Terminal: React.FC<TerminalProps> = ({
         <div className="terminal-content">
           <div className="terminal-header">
             <div className="terminal-title">MR.RED TERMINAL v3.0</div>
-            <div className="terminal-controls flex justify-between items-center">
+            <div className="terminal-controls">
               <div className="control minimize"></div>
               <div className="control maximize"></div>
               <div className="control close"></div>
-              <ConnectKitButton.Custom>
-                {({ isConnected, isConnecting, show }) => {
-                  return (
-                    <button
-                      onClick={show}
-                      className="bg-red-900 text-white p-2"
-                    >
-                      {isConnected ? "Disconnect Wallet" : "Connect Wallet"}
-                    </button>
-                  );
-                }}
-              </ConnectKitButton.Custom>
             </div>
           </div>
 
           <div className="terminal-body">
-            {showLogin ? (
-              <div className="login-container">
-                <div className="login-header">
-                  <TypingText
-                    text="IDENTITY VERIFICATION REQUIRED"
-                    speed={50}
-                    className="login-prompt"
-                    onType={() => typewriterSound.play("type")}
-                    showCursor={true}
-                  />
+            {commandMode ? (
+              <div className="command-terminal">
+                <div className="command-history">
+                  {commandHistory.map((cmd, index) => (
+                    <div key={index} className="command-line">
+                      <span className="text-red-500">{cmd}</span>
+                    </div>
+                  ))}
+                  {commandOutput && (
+                    <div className="command-output whitespace-pre-line">
+                      {commandOutput}
+                    </div>
+                  )}
+                  
+                  {/* Display posts when available */}
+                  {showPosts && fetchedPosts.length > 0 && (
+                    <div className="posts-container mt-4 border-t border-gray-700 pt-4">
+                      <PostList posts={fetchedPosts} isTerminal={true} />
+                    </div>
+                  )}
+                  
+                  {/* Show loading indicator */}
+                  {processingCommand && (
+                    <div className="processing-indicator text-red-500 animate-pulse">
+                      PROCESSING COMMAND...
+                    </div>
+                  )}
                 </div>
-                <div className="login-box">
-                  <Login />
-                  <button
-                    className="back-button"
-                    onClick={() => setShowLogin(false)}
-                  >
-                    RETURN TO TERMINAL
-                  </button>
-                </div>
+                
+                <form onSubmit={handleCommandSubmit} className="command-input-form mt-4">
+                  <div className="flex items-center">
+                    <span className="text-red-500 mr-2">MR.RED&gt;</span>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={currentCommand}
+                      onChange={(e) => setCurrentCommand(e.target.value)}
+                      className="bg-transparent border-none outline-none text-white flex-1"
+                      autoFocus
+                      disabled={processingCommand}
+                    />
+                  </div>
+                </form>
               </div>
             ) : (
               <>
@@ -433,7 +374,7 @@ const Terminal: React.FC<TerminalProps> = ({
                   )}
                 </div>
 
-                {showOptions && !commandMode && (
+                {showOptions && (
                   <div className="options-container">
                     <div className="options-header">
                       <TypingText
@@ -445,19 +386,6 @@ const Terminal: React.FC<TerminalProps> = ({
                       />
                     </div>
                     <div className="menu-options">
-                      {(!isConnected || !hasLensProfile) && (
-                        <MenuOption
-                          command="register_existence"
-                          description={
-                            isConnected
-                              ? "Complete your digital profile registration"
-                              : "Submit yourself to the digital registry for processing"
-                          }
-                          onClick={() =>
-                            handleOptionClick("register_existence")
-                          }
-                        />
-                      )}
                       <MenuOption
                         command="consume_propaganda"
                         description="Access your daily dose of approved information streams"
@@ -484,52 +412,6 @@ const Terminal: React.FC<TerminalProps> = ({
                         onClick={() => handleOptionClick("command_line")}
                       />
                     </div>
-                  </div>
-                )}
-                
-                {commandMode && (
-                  <div className="command-terminal">
-                    <div className="command-history">
-                      {commandHistory.map((cmd, index) => (
-                        <div key={index} className="command-line">
-                          <span className="text-red-500">{cmd}</span>
-                        </div>
-                      ))}
-                      {commandOutput && (
-                        <div className="command-output whitespace-pre-line">
-                          {commandOutput}
-                        </div>
-                      )}
-                      
-                      {/* Display posts when available */}
-                      {showPosts && fetchedPosts.length > 0 && (
-                        <div className="posts-container mt-4 border-t border-gray-700 pt-4">
-                          <PostList posts={fetchedPosts} isTerminal={true} />
-                        </div>
-                      )}
-                      
-                      {/* Show loading indicator */}
-                      {processingCommand && (
-                        <div className="processing-indicator text-red-500 animate-pulse">
-                          PROCESSING COMMAND...
-                        </div>
-                      )}
-                    </div>
-                    
-                    <form onSubmit={handleCommandSubmit} className="command-input-form mt-4">
-                      <div className="flex items-center">
-                        <span className="text-red-500 mr-2">MR.RED&gt;</span>
-                        <input
-                          ref={inputRef}
-                          type="text"
-                          value={currentCommand}
-                          onChange={(e) => setCurrentCommand(e.target.value)}
-                          className="bg-transparent border-none outline-none text-white flex-1"
-                          autoFocus
-                          disabled={processingCommand}
-                        />
-                      </div>
-                    </form>
                   </div>
                 )}
               </>
