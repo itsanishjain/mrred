@@ -28,7 +28,7 @@ import { LoadingScreen } from "@/components/terminal-loading";
 import { PageTransition } from "@/components/transitions/PageTransition";
 
 const DEBUG_BUTTONS = false;
-const DELAY = 15000;
+const DELAY = 30000;
 
 const App = () => {
   // State to track whether to show onboarding or terminal

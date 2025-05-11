@@ -21,7 +21,7 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
       <div className="w-full h-full relative">
         {/* Outer ring with gradient */}
         <motion.div
-          className="absolute inset-0 rounded-full border-4 border-red-900/30"
+          className="absolute inset-0 rounded-full "
           animate={{ rotate: 360 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         />

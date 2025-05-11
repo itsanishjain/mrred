@@ -77,8 +77,8 @@ export const LoadingScreen: React.FC = () => {
           animate={{ x: 0, opacity: 1 }}
           className="lg:col-span-1 flex flex-col gap-4"
         >
-          <div className="bg-black/40 backdrop-blur-sm border border-red-900/30 rounded-lg p-4 h-full">
-            <h3 className="text-sm font-bold mb-4 border-b border-red-900/30 pb-2">
+          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 h-full shadow-lg md:h-[calc(100vh-4rem)]">
+            <h3 className="text-sm font-bold mb-4 border-b border-red-500/10 pb-2">
               SYSTEM DIAGNOSTICS
             </h3>
             <div className="space-y-4">
@@ -138,8 +138,8 @@ export const LoadingScreen: React.FC = () => {
           animate={{ x: 0, opacity: 1 }}
           className="lg:col-span-1 flex flex-col gap-4"
         >
-          <div className="bg-black/40 backdrop-blur-sm border border-red-900/30 rounded-lg p-4">
-            <h3 className="text-sm font-bold mb-4 border-b border-red-900/30 pb-2">
+          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+            <h3 className="text-sm font-bold mb-4 border-b border-red-500/10 pb-2">
               SECURITY VERIFICATION
             </h3>
             <SecurityCheckList checks={securityChecks} />
@@ -151,7 +151,7 @@ export const LoadingScreen: React.FC = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm border-t border-red-900/30 p-2"
+        className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm p-2 shadow-md"
       >
         <div className="flex justify-between items-center text-[10px] text-red-700 max-w-7xl mx-auto px-4">
           <span>MR.RED v2.0.25</span>

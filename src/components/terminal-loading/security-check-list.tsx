@@ -20,7 +20,7 @@ export const SecurityCheckList: React.FC<SecurityCheckListProps> = ({
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="font-medium border-l border-red-800/50 pl-2"
+            className="font-medium pl-2"
           >
             {name}
           </motion.div>
