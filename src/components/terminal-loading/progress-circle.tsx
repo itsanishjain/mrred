@@ -53,22 +53,16 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
         </svg>
 
         {/* Center content */}
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center"
-          animate={{ scale: [0.95, 1.05, 0.95] }}
-          transition={{ duration: 4, repeat: Infinity }}
-        >
+        <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <motion.div
-              className="text-4xl font-bold text-red-500"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
+            <div className="text-4xl md:text-5xl font-bold text-red-500">
               {Math.round(progress)}%
-            </motion.div>
-            <div className="text-sm text-red-700 mt-2">INITIALIZING</div>
+            </div>
+            <div className="text-sm md:text-base uppercase tracking-widest text-red-700 mt-2 font-mono font-semibold">
+              INITIALIZING
+            </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Rotating markers */}
         {[...Array(8)].map((_, i) => (
@@ -83,7 +77,6 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
               className="w-full h-full bg-red-500 rounded-full"
               animate={{
                 scale: [1, 1.5, 1],
-                opacity: [0.3, 1, 0.3],
               }}
               transition={{
                 duration: 2,
