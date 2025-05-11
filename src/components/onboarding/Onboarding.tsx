@@ -3,38 +3,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Howl } from "howler";
 import { useAccount } from "wagmi";
-import TypingText from "../terminal/TypingText";
 import { ConnectKitButton } from "connectkit";
 import { getPublicClient } from "@/lib/lens/client";
-import "./OnboardingStyles.css";
+import { OnboardingTerminal } from "./onboarding-terminal";
+
+export default function OnboardingPage({ onboardUser }: OnboardingProps) {
+  return (
+    <div className="min-h-screen bg-black">
+      <Onboarding onboardUser={onboardUser} />
+    </div>
+  );
+}
 
 interface OnboardingProps {
   onboardUser: () => Promise<void>;
 }
 
-interface BootLineProps {
-  text: string;
-  type?: "normal" | "warning" | "success";
-  delay: number;
-}
-
-const BootLine: React.FC<BootLineProps> = ({
-  text,
-  type = "normal",
-  delay,
-}) => {
-  const className = `boot-line delay-${delay} ${
-    type === "warning"
-      ? "warning-text"
-      : type === "success"
-      ? "success-text"
-      : ""
-  }`;
-
-  return <div className={className}>{text}</div>;
-};
-
-const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
+function Onboarding({ onboardUser }: OnboardingProps) {
   // State management
   const [bootSequenceComplete, setBootSequenceComplete] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -44,9 +29,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [bootLines, setBootLines] = useState<string[]>([]);
+  const [walletInitialized, setWalletInitialized] = useState(false);
+  const [walletCheckStarted, setWalletCheckStarted] = useState(false);
 
   // Refs
-  const loadingBarRef = useRef<HTMLDivElement>(null);
   const terminalBodyRef = useRef<HTMLDivElement>(null);
 
   // Get wallet connection status
@@ -70,20 +57,41 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
     volume: 0.5,
   });
 
-  // Boot sequence animation
+  // Boot sequence animation with integrated wallet initialization
   useEffect(() => {
-    const bootTimer = setTimeout(() => {
-      setBootSequenceComplete(true);
-      setCurrentStep(1); // Move to connection step after boot
+    const bootMessages = [
+      "INITIALIZING SYSTEM...",
+      "LOADING SECURITY PROTOCOLS...",
+      "ESTABLISHING SECURE CONNECTION...",
+      "ACCESSING CENTRAL DATABASE...",
+      "INITIALIZING WALLET CONNECTION...",
+      "PREPARING IDENTITY VERIFICATION...",
+      "WARNING: UNAUTHORIZED ACCESS WILL RESULT IN IMMEDIATE TERMINATION",
+    ];
 
-      // Auto-scroll to bottom of terminal
-      if (terminalBodyRef.current) {
-        terminalBodyRef.current.scrollTop =
-          terminalBodyRef.current.scrollHeight;
+    let currentIndex = 0;
+
+    const interval = setInterval(() => {
+      if (currentIndex < bootMessages.length) {
+        setBootLines((prev) => [...prev, bootMessages[currentIndex]]);
+
+        // Start wallet initialization when we reach that step
+        if (bootMessages[currentIndex].includes("INITIALIZING WALLET")) {
+          setWalletInitialized(true);
+        }
+
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          setBootSequenceComplete(true);
+          setCurrentStep(1); // Move to connection step after boot
+          setWalletCheckStarted(true);
+        }, 1000);
       }
-    }, 4000); // Boot sequence takes 4 seconds
+    }, 600); // Slightly faster to keep engagement
 
-    return () => clearTimeout(bootTimer);
+    return () => clearInterval(interval);
   }, []);
 
   // Loading bar animation
@@ -92,7 +100,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
 
     const interval = setInterval(() => {
       setLoadingProgress((prev) => {
-        const newProgress = prev + 5;
+        const newProgress = prev + 3; // Slower progress to match the longer boot sequence
         if (newProgress >= 100) {
           clearInterval(interval);
           return 100;
@@ -137,10 +145,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
       }
     };
 
-    if (isConnected && currentStep === 1) {
+    if (isConnected && walletCheckStarted) {
       checkLensProfile();
     }
-  }, [isConnected, address, currentStep]);
+  }, [isConnected, address, walletCheckStarted, alarmSound, successSound]);
 
   // Handle registration process
   const handleRegistration = async () => {
@@ -172,93 +180,196 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
     if (terminalBodyRef.current) {
       terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
     }
-  }, [currentStep, processingRegistration, registrationComplete]);
+  }, [currentStep, processingRegistration, registrationComplete, bootLines]);
 
   return (
-    <div className="onboarding-container">
-      <div className="classified">CLASSIFIED</div>
-      <div className="onboarding-terminal">
-        <div className="terminal-header">
-          <div className="terminal-title">
-            MR.RED IDENTITY VERIFICATION v1.0
-          </div>
-          <div className="terminal-controls">
-            <div className="control minimize"></div>
-            <div className="control maximize"></div>
-            <div className="control close"></div>
-          </div>
+    <div className="w-full h-screen">
+      <div className="absolute top-0 left-0 right-0 text-center z-10 pointer-events-none">
+        <div className="inline-block px-4 py-1 bg-red-800 text-white font-mono text-xs tracking-widest border border-red-600 rounded-md">
+          CLASSIFIED
         </div>
+      </div>
 
-        <div className="terminal-body" ref={terminalBodyRef}>
-          {/* Boot Sequence */}
-          <div className="boot-sequence">
-            <BootLine text="INITIALIZING SYSTEM..." delay={1} />
-            <BootLine text="LOADING SECURITY PROTOCOLS..." delay={2} />
-            <BootLine text="ESTABLISHING SECURE CONNECTION..." delay={3} />
-            <BootLine text="ACCESSING CENTRAL DATABASE..." delay={4} />
+      <OnboardingTerminal ref={terminalBodyRef}>
+        <div className="flex flex-col md:flex-row h-full">
+          {/* Left side - Scrolling text */}
+          <div className="w-full md:w-1/2 border-r border-red-800/50 h-full overflow-hidden">
+            <div className="h-full overflow-hidden relative">
+              <div className="animate-scroll font-mono text-red-400 text-sm p-4">
+                {Array(20)
+                  .fill(0)
+                  .map((_, i) => (
+                    <React.Fragment key={i}>
+                      <div className="my-2">
+                        // INITIALIZING NEURAL INTERFACE...
+                      </div>
+                      <div className="my-2">// DECRYPTING DATA STREAMS...</div>
+                      <div className="my-2">
+                        // SYNCHRONIZING PARALLEL REALITIES...
+                      </div>
+                      <div className="my-2">
+                        // TRANSMITTING QUANTUM SIGNALS...
+                      </div>
+                      <div className="my-2">
+                        // UNLOCKING DIGITAL DIMENSIONS...
+                      </div>
+                      <div className="my-2">
+                        // YOU'RE ABOUT TO ENTER THE FUTURE...
+                      </div>
+                    </React.Fragment>
+                  ))}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black pointer-events-none"></div>
+            </div>
+          </div>
 
-            {!bootSequenceComplete && (
-              <div className="loading-bar active">
+          {/* Right side - Terminal content */}
+          <div
+            className="w-full md:w-1/2 p-4 font-mono text-red-400 overflow-y-auto h-full"
+            ref={terminalBodyRef}
+          >
+            {/* Boot Sequence */}
+            <div className="space-y-2">
+              {bootLines.map((line, index) => (
                 <div
-                  className="loading-bar-progress"
-                  style={{ width: `${loadingProgress}%` }}
-                ></div>
+                  key={index}
+                  className={`${
+                    line?.includes("WARNING")
+                      ? "text-yellow-500"
+                      : line?.includes("WALLET")
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {line}
+                </div>
+              ))}
+
+              {!bootSequenceComplete && (
+                <div className="w-full h-2 bg-red-900/30 mt-4 overflow-hidden rounded-sm">
+                  <div
+                    className="h-full bg-red-600 transition-all duration-150"
+                    style={{ width: `${loadingProgress}%` }}
+                  ></div>
+                </div>
+              )}
+
+              {/* Show wallet initialization during boot sequence */}
+              {walletInitialized && !bootSequenceComplete && (
+                <div className="mt-4 p-3 border border-green-800/50 bg-green-900/10 rounded">
+                  <div className="text-green-400 text-sm flex items-center">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                    WALLET INTERFACE INITIALIZING...
+                  </div>
+
+                  <div className="mt-2">
+                    <ConnectKitButton.Custom>
+                      {({ isConnected, isConnecting, show }) => (
+                        <div className="text-xs text-green-300/70">
+                          {isConnecting ? (
+                            <span className="animate-pulse">
+                              ESTABLISHING CONNECTION...
+                            </span>
+                          ) : isConnected ? (
+                            "CONNECTION ESTABLISHED"
+                          ) : (
+                            "PREPARING SECURE CONNECTION..."
+                          )}
+                        </div>
+                      )}
+                    </ConnectKitButton.Custom>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Progress Indicator */}
+            {bootSequenceComplete && (
+              <div className="flex justify-between my-6 px-2">
+                <div
+                  className={`flex flex-col items-center ${
+                    currentStep >= 1 ? "text-red-500" : "text-red-900"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                      currentStep >= 1 ? "border-red-500" : "border-red-900"
+                    } ${currentStep > 1 ? "bg-red-500 text-black" : ""}`}
+                  >
+                    1
+                  </div>
+                  <div className="mt-1 text-xs">CONNECT</div>
+                </div>
+
+                <div className="flex-1 self-center px-2">
+                  <div
+                    className={`h-0.5 ${
+                      currentStep > 1 ? "bg-red-500" : "bg-red-900"
+                    }`}
+                  ></div>
+                </div>
+
+                <div
+                  className={`flex flex-col items-center ${
+                    currentStep >= 2 ? "text-red-500" : "text-red-900"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                      currentStep >= 2 ? "border-red-500" : "border-red-900"
+                    } ${currentStep > 2 ? "bg-red-500 text-black" : ""}`}
+                  >
+                    2
+                  </div>
+                  <div className="mt-1 text-xs">VERIFY</div>
+                </div>
+
+                <div className="flex-1 self-center px-2">
+                  <div
+                    className={`h-0.5 ${
+                      currentStep > 2 ? "bg-red-500" : "bg-red-900"
+                    }`}
+                  ></div>
+                </div>
+
+                <div
+                  className={`flex flex-col items-center ${
+                    currentStep >= 3 ? "text-red-500" : "text-red-900"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                      currentStep >= 3 ? "border-red-500" : "border-red-900"
+                    } ${currentStep > 3 ? "bg-red-500 text-black" : ""}`}
+                  >
+                    3
+                  </div>
+                  <div className="mt-1 text-xs">ACCESS</div>
+                </div>
               </div>
             )}
 
-            <BootLine
-              text="WARNING: UNAUTHORIZED ACCESS WILL RESULT IN IMMEDIATE TERMINATION"
-              type="warning"
-              delay={5}
-            />
-          </div>
+            {/* Step 1: Connect Wallet */}
+            {bootSequenceComplete && currentStep === 1 && (
+              <div className="space-y-4 mt-6">
+                <div className="text-lg font-bold border-b border-red-800 pb-2">
+                  IDENTITY VERIFICATION REQUIRED
+                </div>
 
-          {/* Progress Indicator */}
-          {bootSequenceComplete && (
-            <div className="progress-indicator">
-              <div
-                className={`progress-step ${currentStep >= 1 ? "active" : ""} ${
-                  currentStep > 1 ? "completed" : ""
-                }`}
-              >
-                <div className="progress-step-circle">1</div>
-                <div className="progress-step-label">CONNECT</div>
-              </div>
-              <div
-                className={`progress-step ${currentStep >= 2 ? "active" : ""} ${
-                  currentStep > 2 ? "completed" : ""
-                }`}
-              >
-                <div className="progress-step-circle">2</div>
-                <div className="progress-step-label">VERIFY</div>
-              </div>
-              <div
-                className={`progress-step ${currentStep >= 3 ? "active" : ""}`}
-              >
-                <div className="progress-step-circle">3</div>
-                <div className="progress-step-label">ACCESS</div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 1: Connect Wallet */}
-          {bootSequenceComplete && currentStep === 1 && (
-            <div className="connect-section active">
-              <div className="section-header">
-                IDENTITY VERIFICATION REQUIRED
-              </div>
-
-              <div className="section-content">
-                <div className="warning-text">
+                <div className="text-yellow-500 font-bold">
                   CONNECT YOUR DIGITAL WALLET TO PROCEED
                 </div>
-                <p>
+
+                <p className="text-sm">
                   Your biometric data will be scanned and recorded for future
                   reference.
                 </p>
 
-                <div className="biometric-scan">
-                  {/* This would be replaced with an actual camera feed or avatar in a real implementation */}
+                <div className="my-4 h-16 w-full bg-red-900/20 flex items-center justify-center border border-red-800/50 rounded">
+                  <div className="text-xs animate-pulse">
+                    BIOMETRIC SCAN IN PROGRESS
+                  </div>
                 </div>
 
                 <ConnectKitButton.Custom>
@@ -268,11 +379,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
                         show && show();
                         typewriterSound.play("type");
                       }}
-                      className="action-button"
+                      className="w-full py-2 bg-red-800 hover:bg-red-700 text-white font-bold border border-red-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors"
                       disabled={isConnecting}
                     >
                       {isConnecting ? (
-                        <span className="blink">
+                        <span className="animate-pulse">
                           ESTABLISHING CONNECTION...
                         </span>
                       ) : isConnected ? (
@@ -284,9 +395,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
                   )}
                 </ConnectKitButton.Custom>
 
-                <p className="status-text">
+                <p className="text-sm mt-4">
                   {isConnected ? (
-                    <span className="success-text">
+                    <span className="text-green-500">
                       WALLET CONNECTED. VERIFYING CREDENTIALS...
                     </span>
                   ) : (
@@ -294,22 +405,24 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
                   )}
                 </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 2: Register Profile */}
-          {bootSequenceComplete && currentStep === 2 && (
-            <div className="register-section active">
-              <div className="section-header">
-                DIGITAL IDENTITY CREATION
-              </div>
+            {/* Step 2: Register Profile */}
+            {bootSequenceComplete && currentStep === 2 && (
+              <div className="space-y-4 mt-6">
+                <div className="text-lg font-bold border-b border-red-800 pb-2">
+                  DIGITAL IDENTITY CREATION
+                </div>
 
-              <div className="section-content">
-                <div className="warning-text">NO EXISTING PROFILE DETECTED</div>
-                <p>
+                <div className="text-yellow-500 font-bold">
+                  NO EXISTING PROFILE DETECTED
+                </div>
+
+                <p className="text-sm">
                   You must register your digital identity to access the system.
                 </p>
-                <p>
+
+                <p className="text-sm">
                   This process is irreversible. Your data will be permanently
                   recorded on the blockchain.
                 </p>
@@ -319,59 +432,66 @@ const Onboarding: React.FC<OnboardingProps> = ({ onboardUser }) => {
                     handleRegistration();
                     typewriterSound.play("type");
                   }}
-                  className="action-button"
+                  className="w-full py-2 bg-red-800 hover:bg-red-700 text-white font-bold border border-red-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors"
                   disabled={processingRegistration}
                 >
                   {processingRegistration ? (
-                    <span className="blink">CREATING DIGITAL IDENTITY...</span>
+                    <span className="animate-pulse">
+                      CREATING DIGITAL IDENTITY...
+                    </span>
                   ) : (
                     "INITIATE PROFILE CREATION"
                   )}
                 </button>
 
                 {processingRegistration && (
-                  <div className="loading-bar active">
-                    <div className="loading-bar-progress"></div>
+                  <div className="w-full h-2 bg-red-900/30 mt-4 overflow-hidden rounded-sm">
+                    <div className="h-full bg-red-600 animate-pulse w-full"></div>
                   </div>
                 )}
 
                 {errorMessage && (
-                  <div className="error-message">{errorMessage}</div>
+                  <div className="text-yellow-500 border border-yellow-500 p-2 mt-4 bg-yellow-500/10 rounded">
+                    {errorMessage}
+                  </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 3: Complete */}
-          {bootSequenceComplete && currentStep === 3 && (
-            <div className="complete-section active">
-              <div className="section-header success-text">
-                IDENTITY VERIFICATION COMPLETE
-              </div>
+            {/* Step 3: Complete */}
+            {bootSequenceComplete && currentStep === 3 && (
+              <div className="space-y-4 mt-6">
+                <div className="text-lg font-bold border-b border-green-800 pb-2 text-green-500">
+                  IDENTITY VERIFICATION COMPLETE
+                </div>
 
-              <div className="section-content">
-                <div className="success-text">ACCESS GRANTED</div>
-                <p>
+                <div className="text-green-500 font-bold">ACCESS GRANTED</div>
+
+                <p className="text-sm">
                   Your digital identity has been verified and recorded in the
                   central database.
                 </p>
-                <p>You now have access to the MR.RED terminal system.</p>
 
-                <a href="/" className="action-button">
+                <p className="text-sm">
+                  You now have access to the MR.RED terminal system.
+                </p>
+
+                <a
+                  href="/"
+                  className="block w-full py-2 bg-green-800 hover:bg-green-700 text-white font-bold border border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-center"
+                >
                   PROCEED TO TERMINAL
                 </a>
 
-                <p className="status-text warning-text">
+                <p className="text-yellow-500 text-sm mt-4 border border-yellow-500/50 p-2 bg-yellow-500/10 rounded">
                   WARNING: ALL ACTIONS WITHIN THE TERMINAL ARE MONITORED AND
                   RECORDED
                 </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </OnboardingTerminal>
     </div>
   );
-};
-
-export default Onboarding;
+}

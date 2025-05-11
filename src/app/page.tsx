@@ -15,14 +15,12 @@ import {
   fetchPosts,
   fetchPostsForYou,
 } from "@lens-protocol/client/actions";
-import { Login } from "@/components/Login";
 import { useWalletClient, useAccount } from "wagmi";
 import { useState, useEffect } from "react";
 import { getLensClient, getPublicClient } from "@/lib/lens/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import { never } from "@lens-protocol/client";
 import { chains } from "@lens-chain/sdk/viem";
-import { Card, CardTitle } from "@/components/ui/card";
 import Terminal from "@/components/terminal/Terminal";
 import Onboarding from "@/components/onboarding/Onboarding";
 import { Button } from "@/components/ui/button";
@@ -31,7 +29,6 @@ const App = () => {
   // State to track whether to show onboarding or terminal
   const [showOnboarding, setShowOnboarding] = useState(true);
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
-  const { address, isConnected } = useAccount();
 
   const { data: walletClient } = useWalletClient();
 
@@ -239,12 +236,18 @@ const App = () => {
       {showOnboarding ? (
         <Onboarding onboardUser={onboardUser} />
       ) : (
-        <Terminal 
+        <Terminal
           createTextPost={createTextPost}
           fetchUserPosts={fetchUserPosts}
           fetchUserPostsForYou={fetchUserPostsForYou}
         />
       )}
+
+      {/* <Terminal
+        createTextPost={createTextPost}
+        fetchUserPosts={fetchUserPosts}
+        fetchUserPostsForYou={fetchUserPostsForYou}
+      /> */}
 
       {/* Debug buttons - can be removed in production */}
       {/* <div className="flex gap-2 justify-center items-center h-screen">
