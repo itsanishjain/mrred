@@ -25,9 +25,10 @@ import Terminal from "@/components/terminal/Terminal";
 import Onboarding from "@/components/onboarding/Onboarding";
 import { Button } from "@/components/ui/button";
 import { LoadingScreen } from "@/components/terminal-loading";
+import { PageTransition } from "@/components/transitions/PageTransition";
 
 const DEBUG_BUTTONS = false;
-const DELAY = 5000;
+const DELAY = 15000;
 
 const App = () => {
   // State to track whether to show onboarding or terminal
@@ -243,34 +244,51 @@ const App = () => {
     checkAuthentication();
   }, []);
 
-  return (
-    <>
-      {isAuthChecking ? (
-        <LoadingScreen />
-      ) : showOnboarding ? (
-        <Onboarding onboardUser={onboardUser} />
-      ) : (
+  // Determine which component to render based on state
+  const renderComponent = () => {
+    if (isAuthChecking) {
+      return <LoadingScreen />;
+    } else if (showOnboarding) {
+      return <Onboarding onboardUser={onboardUser} />;
+    } else {
+      return (
         <Terminal
           createTextPost={createTextPost}
           fetchUserPosts={fetchUserPosts}
           fetchUserPostsForYou={fetchUserPostsForYou}
         />
-      )}
+      );
+    }
+  };
 
-      {/* <Terminal
-        createTextPost={createTextPost}
-        fetchUserPosts={fetchUserPosts}
-        fetchUserPostsForYou={fetchUserPostsForYou}
-      /> */}
+  // Generate a unique location key based on the current state
+  const locationKey = isAuthChecking
+    ? "loading"
+    : showOnboarding
+    ? "onboarding"
+    : "terminal";
+
+  return (
+    <div className="min-h-screen w-full overflow-hidden bg-black">
+      <PageTransition location={locationKey}>
+        {renderComponent()}
+      </PageTransition>
 
       {/* Debug buttons - can be removed in production */}
-      {/* <div className="flex gap-2 justify-center items-center h-screen">
-        <Button onClick={onboardUser}>Onboard User</Button>
-        <Button onClick={createTextPost}>Create Post</Button>
-        <Button onClick={fetchUserPosts}>Fetch Posts</Button>
-        <Button onClick={fetchUserPostsForYou}>Fetch Posts For You</Button>
-      </div> */}
-    </>
+      {DEBUG_BUTTONS && (
+        <div className="fixed bottom-4 right-4 flex gap-2 z-50">
+          <Button onClick={onboardUser} size="sm" variant="destructive">
+            Onboard
+          </Button>
+          <Button onClick={createTextPost} size="sm" variant="destructive">
+            Post
+          </Button>
+          <Button onClick={fetchUserPosts} size="sm" variant="destructive">
+            Fetch
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 

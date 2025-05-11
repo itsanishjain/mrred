@@ -8,6 +8,8 @@ const config = {
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
+  // Add the transitions.css file to the Tailwind processing
+  // This allows our custom transition effects to be used
   prefix: "",
   theme: {
   	container: {
@@ -115,7 +117,40 @@ const config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+      const newUtilities = {
+        '.bg-scan-lines': {
+          backgroundImage: 'repeating-linear-gradient(0deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.1) 1px, transparent 1px, transparent 2px)',
+          pointerEvents: 'none',
+        },
+        '.glitch-text': {
+          position: 'relative',
+          animation: 'glitch 1s infinite',
+        },
+        '.digital-noise': {
+          position: 'relative',
+        },
+        '.digital-noise::before': {
+          content: '""',
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          width: '100%',
+          height: '100%',
+          backgroundImage: 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkEBDEVgVO8PQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAGMSURBVGje7dpBbsIwEAXQP5d3g3qEHgFxhB6hR+gRuuAIXHCuHKFdoEaKUBaThcGTOJkk/JdiaYLieZZnbCclgGtgB+yBSNNGYAcsgavUCTTAWxOkiXkDGmA1FcTCU4xXoAaWwANwbp6X5l0dU/sBrIHsGBCb/XMTtDMEYgNUxyxZl0XLInBK2X5/1WQXwDMQUt4QgGfgYgyIBXgZCaIWZA5ARYuRlnpKrZWZkbLKSsXMSEQ2M1JyRjQgmxkpOSMakM2MlJwRDchmRkrOiAZkMyMlZ0QDspmRkjOiAdnMSMkZ0YBsZqTkjGhANjNSckY0IJsZKTkjGpDNjJScEQ3IZkZKzogGZDMjJWdEA7KZkZIzogHZzEjJGdGAbGak5IxoQDYzUnJGNCCbGSk5IxqQzYyUnBENyGZGSs6IBmQzIyVnRAOymZGSM6IB2cxIyRnRgGxmpOSMaEA2M1JyRjQgmxkpOSMakM2MlJwRDchmRkrOiAZkMyMlZ0QDspmRkjPyC2QAyo0wkFGzAAAAAElFTkSuQmCC")',
+          opacity: '0.05',
+          pointerEvents: 'none',
+        },
+        '.crt-flicker': {
+          animation: 'flicker 0.15s infinite',
+        },
+      };
+      
+      addUtilities(newUtilities);
+    },
+  ],
 } satisfies Config;
 
 export default config;
