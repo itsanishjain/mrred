@@ -99,6 +99,10 @@ const config = {
   				'0%': { borderColor: 'hsl(var(--destructive))' },
   				'50%': { borderColor: 'transparent' },
   				'100%': { borderColor: 'hsl(var(--destructive))' }
+  			},
+  			'fade-in': {
+  				'0%': { opacity: '0', transform: 'translateY(5px)' },
+  				'100%': { opacity: '1', transform: 'translateY(0)' }
   			}
   		},
   		animation: {
@@ -106,7 +110,8 @@ const config = {
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'scroll': 'scroll 20s linear infinite',
   			'typing': 'typing 4s steps(20) infinite',
-  			'blink': 'blink 1s infinite'
+  			'blink': 'blink 1s infinite',
+  			'fade-in': 'fade-in 0.5s ease-out forwards'
   		}
   	}
   },

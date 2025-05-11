@@ -247,7 +247,7 @@ const App = () => {
     <>
       {isAuthChecking ? (
         <LoadingScreen />
-      ) : !showOnboarding ? (
+      ) : showOnboarding ? (
         <Onboarding onboardUser={onboardUser} />
       ) : (
         <Terminal
