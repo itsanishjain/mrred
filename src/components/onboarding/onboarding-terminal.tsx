@@ -38,3 +38,5 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
     );
   }
 );
+
+OnboardingTerminal.displayName = "OnboardingTerminal";
