@@ -15,7 +15,7 @@ import {
   fetchPosts,
   fetchPostsForYou,
 } from "@lens-protocol/client/actions";
-import { useWalletClient, useAccount } from "wagmi";
+import { useWalletClient } from "wagmi";
 import { useState, useEffect } from "react";
 import { getLensClient, getPublicClient } from "@/lib/lens/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
@@ -248,7 +248,7 @@ const App = () => {
   const renderComponent = () => {
     if (isAuthChecking) {
       return <LoadingScreen />;
-    } else if (showOnboarding) {
+    } else if (!showOnboarding) {
       return <Onboarding onboardUser={onboardUser} />;
     } else {
       return (
