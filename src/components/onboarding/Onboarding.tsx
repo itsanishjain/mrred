@@ -148,7 +148,7 @@ function Onboarding({ onboardUser }: OnboardingProps) {
     if (isConnected && walletCheckStarted) {
       checkLensProfile();
     }
-  }, [isConnected, address, walletCheckStarted, alarmSound, successSound]);
+  }, [isConnected, address, walletCheckStarted, alarmSound, successSound, setCurrentStep, setHasLensProfile, setIsLoading, setErrorMessage]);
 
   // Handle registration process
   const handleRegistration = async () => {
@@ -201,20 +201,20 @@ function Onboarding({ onboardUser }: OnboardingProps) {
                   .map((_, i) => (
                     <React.Fragment key={i}>
                       <div className="my-2">
-                        // INITIALIZING NEURAL INTERFACE...
+                        INITIALIZING NEURAL INTERFACE...
                       </div>
-                      <div className="my-2">// DECRYPTING DATA STREAMS...</div>
+                      <div className="my-2">DECRYPTING DATA STREAMS...</div>
                       <div className="my-2">
-                        // SYNCHRONIZING PARALLEL REALITIES...
-                      </div>
-                      <div className="my-2">
-                        // TRANSMITTING QUANTUM SIGNALS...
+                        SYNCHRONIZING PARALLEL REALITIES...
                       </div>
                       <div className="my-2">
-                        // UNLOCKING DIGITAL DIMENSIONS...
+                        TRANSMITTING QUANTUM SIGNALS...
                       </div>
                       <div className="my-2">
-                        // YOU'RE ABOUT TO ENTER THE FUTURE...
+                        UNLOCKING DIGITAL DIMENSIONS...
+                      </div>
+                      <div className="my-2">
+                        YOU'RE ABOUT TO ENTER THE FUTURE...
                       </div>
                     </React.Fragment>
                   ))}
