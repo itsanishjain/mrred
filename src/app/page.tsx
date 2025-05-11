@@ -24,10 +24,16 @@ import { chains } from "@lens-chain/sdk/viem";
 import Terminal from "@/components/terminal/Terminal";
 import Onboarding from "@/components/onboarding/Onboarding";
 import { Button } from "@/components/ui/button";
+import { LoadingScreen } from "@/components/terminal-loading";
+
+const DEBUG_BUTTONS = false;
+const DELAY = 5000;
 
 const App = () => {
   // State to track whether to show onboarding or terminal
   const [showOnboarding, setShowOnboarding] = useState(true);
+  // State to track loading state during authentication check
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
 
   const { data: walletClient } = useWalletClient();
@@ -212,6 +218,7 @@ const App = () => {
   // Check if user is authenticated
   useEffect(() => {
     const checkAuthentication = async () => {
+      setIsAuthChecking(true);
       try {
         const client = getPublicClient();
         const resumed = await client.resumeSession();
@@ -225,6 +232,11 @@ const App = () => {
       } catch (error) {
         console.error("Error checking authentication:", error);
         setShowOnboarding(true);
+      } finally {
+        // Add a longer delay to showcase the loading animation
+        setTimeout(() => {
+          setIsAuthChecking(false);
+        }, DELAY);
       }
     };
 
@@ -233,7 +245,9 @@ const App = () => {
 
   return (
     <>
-      {showOnboarding ? (
+      {isAuthChecking ? (
+        <LoadingScreen />
+      ) : !showOnboarding ? (
         <Onboarding onboardUser={onboardUser} />
       ) : (
         <Terminal

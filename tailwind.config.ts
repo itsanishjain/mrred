@@ -85,12 +85,28 @@ const config = {
   			'scroll': {
   				'0%': { transform: 'translateY(0)' },
   				'100%': { transform: 'translateY(-50%)' }
+  			},
+  			'typing': {
+  				'0%': { width: '0%', borderColor: 'transparent' },
+  				'5%': { width: '0%', borderColor: 'hsl(var(--destructive))' },
+  				'30%': { width: '100%' },
+  				'80%': { width: '100%' },
+  				'85%': { width: '100%', borderColor: 'transparent' },
+  				'90%': { width: '0%', borderColor: 'transparent' },
+  				'100%': { width: '0%', borderColor: 'transparent' }
+  			},
+  			'blink': {
+  				'0%': { borderColor: 'hsl(var(--destructive))' },
+  				'50%': { borderColor: 'transparent' },
+  				'100%': { borderColor: 'hsl(var(--destructive))' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'scroll': 'scroll 20s linear infinite'
+  			'scroll': 'scroll 20s linear infinite',
+  			'typing': 'typing 4s steps(20) infinite',
+  			'blink': 'blink 1s infinite'
   		}
   	}
   },
