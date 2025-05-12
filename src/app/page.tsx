@@ -121,7 +121,7 @@ const App = () => {
     console.log({ result });
   };
 
-  const createTextPost = async () => {
+  const createTextPost = async ({ postContent }: { postContent: string }) => {
     if (!walletClient) {
       console.error("Wallet not connected. Please connect your wallet first.");
       return;
@@ -135,7 +135,7 @@ const App = () => {
     }
 
     const metadata = textOnly({
-      content: `MOM IS MOM`,
+      content: postContent,
     });
 
     const { uri: postUri } = await storageClient.uploadAsJson(metadata);
@@ -295,7 +295,11 @@ const App = () => {
           <Button onClick={onboardUser} size="sm" variant="destructive">
             Onboard
           </Button>
-          <Button onClick={createTextPost} size="sm" variant="destructive">
+          <Button
+            onClick={() => createTextPost({ postContent: "lens is the best" })}
+            size="sm"
+            variant="destructive"
+          >
             Post
           </Button>
           <Button onClick={fetchUserPosts} size="sm" variant="destructive">
