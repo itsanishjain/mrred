@@ -47,10 +47,10 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
     return (
       <div className="post-item mb-4 border-b border-gray-700 pb-3 font-mono text-sm">
         <div className="post-header text-red-500">
-          POST_ID: {id.substring(0, 10)}...{id.substring(id.length - 10)}
+          POST_ID: {id ? `${id.substring(0, 10)}...${id.substring(id.length - 10)}` : 'Unknown'}
         </div>
         <div className="post-author">
-          AUTHOR: {author?.username?.value || author?.address?.substring(0, 10) || 'Unknown'}
+          AUTHOR: {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
         </div>
         <div className="post-date">
           TIMESTAMP: {formattedDate}
@@ -62,9 +62,9 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
         {mediaUrl && (
           <div className="post-media mt-2">
             {hasImage ? (
-              <div className="text-yellow-500">[IMAGE ATTACHMENT: {mediaUrl.substring(0, 50)}...]</div>
+              <div className="text-yellow-500">[IMAGE ATTACHMENT: {mediaUrl.length > 50 ? mediaUrl.substring(0, 50) + '...' : mediaUrl}]</div>
             ) : hasVideo ? (
-              <div className="text-yellow-500">[VIDEO ATTACHMENT: {mediaUrl.substring(0, 50)}...]</div>
+              <div className="text-yellow-500">[VIDEO ATTACHMENT: {mediaUrl.length > 50 ? mediaUrl.substring(0, 50) + '...' : mediaUrl}]</div>
             ) : null}
           </div>
         )}
@@ -81,7 +81,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
     <div className="post-item mb-4 border border-gray-200 rounded-lg p-4 dark:border-gray-700">
       <div className="post-header flex items-center mb-2">
         <div className="font-medium">
-          {author?.username?.value || author?.address?.substring(0, 10) || 'Unknown'}
+          {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
         </div>
         <div className="text-gray-500 text-sm ml-2">
           {formattedDate}

@@ -6,11 +6,17 @@ import { useAccount } from "wagmi";
 import TypingText from "./TypingText";
 import MenuOption from "./MenuOption";
 import PostList from "./PostList";
+import { Ok, UnexpectedError } from "@lens-protocol/client";
+import { Paginated, AnyPost } from "@lens-protocol/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TerminalProps {
   createTextPost?: () => Promise<void>;
-  fetchUserPosts?: () => Promise<void>;
-  fetchUserPostsForYou?: () => Promise<void>;
+  fetchUserPosts?: () => Promise<void | Ok<
+    Paginated<AnyPost>,
+    UnexpectedError
+  >>;
+  fetchUserFeed?: () => Promise<void | Ok<Paginated<any>, UnexpectedError>>;
 }
 
 interface PostData {
@@ -40,15 +46,15 @@ interface PostData {
   };
 }
 
-const Terminal: React.FC<TerminalProps> = ({ 
+const Terminal: React.FC<TerminalProps> = ({
   createTextPost,
   fetchUserPosts,
-  fetchUserPostsForYou
+  fetchUserFeed,
 }) => {
   const [showIntro1, setShowIntro1] = useState(true);
   const [showIntro2, setShowIntro2] = useState(false);
   const [showIntro3, setShowIntro3] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
+  const [showOptions, setShowOptions] = useState(true);
   const [poweringUp, setPoweringUp] = useState(true);
   const [commandMode, setCommandMode] = useState(false);
   const [currentCommand, setCurrentCommand] = useState("");
@@ -61,6 +67,8 @@ const Terminal: React.FC<TerminalProps> = ({
 
   // Get wallet connection status
   const { isConnected, address } = useAccount();
+
+  const { toast } = useToast();
 
   const typewriterSound = new Howl({
     src: ["/assets/typewriter.wav"],
@@ -95,6 +103,17 @@ const Terminal: React.FC<TerminalProps> = ({
     if (option === "command_line") {
       // Enter command line mode
       setCommandMode(true);
+
+      // Show available commands when entering command mode
+      const commandsHelp =
+        "Available commands:\n" +
+        Object.entries(availableCommands)
+          .map(([cmd, desc]) => `  ${cmd.padEnd(15)} - ${desc}`)
+          .join("\n");
+
+      setCommandHistory([]);
+      setCommandOutput(commandsHelp);
+
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
@@ -108,8 +127,8 @@ const Terminal: React.FC<TerminalProps> = ({
     clear: "Clear the terminal",
     "fetch-posts": "Fetch your posts",
     "create-post": "Create a new post",
-    "fetch-feed": "Fetch your feed for you",
-    exit: "Exit command mode"
+    "fetch-feed": "Fetch your personalized feed",
+    exit: "Exit command mode",
   };
 
   // Mock data for testing - remove in production
@@ -118,22 +137,22 @@ const Terminal: React.FC<TerminalProps> = ({
     author: {
       address: "0x754A315d7cdf7b6014f193E439B59db3aF520613",
       username: {
-        value: "lens/ngmisl"
-      }
+        value: "lens/ngmisl",
+      },
     },
     metadata: {
       content: "Gm",
       image: {
         item: "https://ik.imagekit.io/lens/5c9e1c5a4297febe5737d88fe6d6260b404fc489cf0c3d2abe56d39c4a2cf639_AD--x4FuU.jpeg",
-        altTag: null
-      }
+        altTag: null,
+      },
     },
     timestamp: "2025-05-10T06:54:16+00:00",
     stats: {
       upvotes: 150,
       comments: 72,
-      reposts: 34
-    }
+      reposts: 34,
+    },
   };
 
   const executeCommand = async (cmd: string) => {
@@ -143,10 +162,10 @@ const Terminal: React.FC<TerminalProps> = ({
     // Reset post view state
     setShowPosts(false);
     setFetchedPosts([]);
-    
+
     // Add command to history
-    setCommandHistory(prev => [...prev, `> ${command}`]);
-    
+    setCommandHistory((prev) => [...prev, `> ${command}`]);
+
     // Set processing state
     setProcessingCommand(true);
 
@@ -154,13 +173,15 @@ const Terminal: React.FC<TerminalProps> = ({
       // Process command
       switch (command) {
         case "help":
-          output = "Available commands:\n" + 
+          output =
+            "Available commands:\n" +
             Object.entries(availableCommands)
               .map(([cmd, desc]) => `  ${cmd.padEnd(15)} - ${desc}`)
               .join("\n");
           break;
         case "ls":
-          output = "Available options:\n" +
+          output =
+            "Available options:\n" +
             "  consume_propaganda - Access your daily dose of approved information\n" +
             "  report_dissidence - Report unauthorized thoughts and behavior\n" +
             "  social_compliance - View your social credit score\n" +
@@ -171,86 +192,285 @@ const Terminal: React.FC<TerminalProps> = ({
           setCommandOutput("");
           setProcessingCommand(false);
           return;
-          
+
         case "fetch-posts":
           if (fetchUserPosts) {
-            setCommandOutput("FETCHING YOUR POSTS...\nPlease wait while we retrieve your posts.");
+            setCommandOutput(
+              "FETCHING YOUR POSTS...\nPlease wait while we retrieve your posts."
+            );
             try {
-              await fetchUserPosts();
+              const postsResult = await fetchUserPosts();
               
-              // For demonstration, we'll use the sample post data
-              // In a real implementation, you would extract the posts from the console data
-              // or modify the fetchUserPosts function to return the posts
-              
-              // Mock data for testing - in production, get this from the API response
-              const mockPosts = [samplePost];
-              
-              setFetchedPosts(mockPosts);
-              setShowPosts(true);
-              output = "YOUR POSTS HAVE BEEN RETRIEVED:";
+              if (postsResult && 'isOk' in postsResult && postsResult.isOk()) {
+                // Map feed items to PostData format
+                const mappedPosts = postsResult.value.items.map((post: any) => {
+                  // Initialize variables for post data
+                  let content = '';
+                  let imageUrl = '';
+                  let imageAlt = null;
+                  let timestamp = '';
+                  let authorAddress = '';
+                  let authorUsername = '';
+                  let upvotes = 0;
+                  let comments = 0;
+                  let reposts = 0;
+                  
+                  // Extract post ID
+                  const id = post.id;
+                  
+                  // Extract author information
+                  if (post.author) {
+                    const author = post.author;
+                    authorAddress = author.address || '';
+                    
+                    if (author.username) {
+                      authorUsername = author.username.value || author.username.localName || '';
+                    }
+                  }
+                  
+                  // Extract timestamp
+                  if (post.timestamp) {
+                    timestamp = post.timestamp;
+                  }
+                  
+                  // Extract stats
+                  if (post.stats) {
+                    const stats = post.stats;
+                    upvotes = stats.upvotes || 0;
+                    comments = stats.comments || 0;
+                    reposts = stats.reposts || 0;
+                  }
+                  
+                  // Extract content and media
+                  if (post.metadata) {
+                    const metadata = post.metadata;
+                    
+                    // Get content based on metadata type
+                    if (metadata.content) {
+                      content = metadata.content;
+                    }
+                    
+                    // Get image if available
+                    if (metadata.__typename === 'ImageMetadata' && metadata.image) {
+                      const image = metadata.image;
+                      if (image.item) {
+                        imageUrl = image.item || '';
+                      }
+                      imageAlt = image.altTag || null;
+                    }
+                  }
+                  
+                  // Create PostData object
+                  return {
+                    id,
+                    author: {
+                      address: authorAddress,
+                      username: { value: authorUsername }
+                    },
+                    metadata: {
+                      content,
+                      image: imageUrl ? { item: imageUrl, altTag: imageAlt } : undefined
+                    },
+                    timestamp,
+                    stats: { upvotes, comments, reposts }
+                  } as PostData;
+                });
+                
+                // Filter out any undefined or invalid posts
+                const validPosts = mappedPosts.filter(post => post.id && post.timestamp);
+                
+                // Update state with valid mapped posts
+                setFetchedPosts(validPosts);
+                setShowPosts(true);
+                output = validPosts.length > 0 
+                  ? "YOUR POSTS HAVE BEEN RETRIEVED:" 
+                  : "NO VALID POSTS FOUND.";
+              } else {
+                output = "POST RETRIEVAL FAILED";
+              }
+              // Remove mock data since we're now using real data
             } catch (error) {
-              output = `ERROR IN POST RETRIEVAL: ${error instanceof Error ? error.message : 'Unknown error'}`;
+              output = `ERROR IN POST RETRIEVAL: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`;
             }
           } else {
-            output = "FETCHING YOUR POSTS...\n" +
+            output =
+              "FETCHING YOUR POSTS...\n" +
               "ERROR: Post retrieval function not available. Please connect your wallet first.";
           }
           break;
-          
+
         case "create-post":
           if (createTextPost) {
-            setCommandOutput("CREATING NEW POST...\nPlease wait while we process your request.");
+            setCommandOutput(
+              "CREATING NEW POST...\nPlease wait while we process your request."
+            );
             try {
               await createTextPost();
-              output = "POST CREATION SUCCESSFUL!\nYour thoughts have been permanently recorded in the digital realm.";
+              output =
+                "POST CREATION SUCCESSFUL!\nYour thoughts have been permanently recorded in the digital realm.";
             } catch (error) {
-              output = `POST CREATION FAILED: ${error instanceof Error ? error.message : 'Unknown error'}`;
+              output = `POST CREATION FAILED: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`;
             }
           } else {
-            output = "POST CREATION INTERFACE:\n" +
+            output =
+              "POST CREATION INTERFACE:\n" +
               "ERROR: Creation function not available. Please connect your wallet first.";
           }
           break;
-          
+
         case "fetch-feed":
-          if (fetchUserPostsForYou) {
-            setCommandOutput("FETCHING PERSONALIZED FEED...\nPlease wait while we analyze your digital footprint.");
+          if (fetchUserFeed) {
+            setCommandOutput(
+              "FETCHING PERSONALIZED FEED...\nPlease wait while we analyze your digital footprint."
+            );
             try {
-              await fetchUserPostsForYou();
+              // Call the fetchUserFeed function to get the user's feed
+              const feedResult = await fetchUserFeed();
               
-              // For demonstration, we'll use the sample post data
-              // In a real implementation, you would extract the posts from the console data
-              // or modify the fetchUserPostsForYou function to return the posts
+              // Handle case where no result is returned
+              if (!feedResult) {
+                output = "FEED RETRIEVAL FAILED: No feed data returned";
+                toast({
+                  title: "Feed fetching failed",
+                  description: "No feed data available",
+                  variant: "destructive",
+                });
+                break;
+              }
               
-              // Mock data for testing - in production, get this from the API response
-              const mockFeed = [
-                samplePost,
-                {...samplePost, id: "68823665970495445097518222922132319050094952959899120707583022726017483112889", metadata: {content: "Another post in your feed"}},
-                {...samplePost, id: "68823665970495445097518222922132319050094952959899120707583022726017483112890", metadata: {content: "MR.RED is always watching"}}
-              ];
+              // Handle error case
+              if ('isErr' in feedResult && feedResult.isErr()) {
+                output = `FEED RETRIEVAL FAILED: ${feedResult.error.message || 'Unknown error'}`;
+                toast({
+                  title: "Feed fetching failed",
+                  description: feedResult.error.message || "Please try again later",
+                  variant: "destructive",
+                });
+                break;
+              }
               
-              setFetchedPosts(mockFeed);
-              setShowPosts(true);
-              output = "YOUR PERSONALIZED FEED HAS BEEN RETRIEVED:";
+              // Process successful result
+              if ('isOk' in feedResult && feedResult.isOk()) {
+                // Map feed items to PostData format
+                const mappedPosts = feedResult.value.items.map((feedItem) => {
+                  // Initialize variables for post data
+                  let content = '';
+                  let imageUrl = '';
+                  let imageAlt = null;
+                  let timestamp = '';
+                  let authorAddress = '';
+                  let authorUsername = '';
+                  let upvotes = 0;
+                  let comments = 0;
+                  let reposts = 0;
+                  
+                  // For PostForYou type, extract the actual post
+                  const post = feedItem.__typename === 'PostForYou' ? feedItem.post : feedItem;
+                  
+                  // Extract post ID
+                  const id = post.id;
+                  
+                  // Extract author information
+                  if (post.author) {
+                    const author = post.author;
+                    authorAddress = author.address || '';
+                    
+                    if (author.username) {
+                      authorUsername = author.username.value || author.username.localName || '';
+                    }
+                  }
+                  
+                  // Extract timestamp
+                  if (post.timestamp) {
+                    timestamp = post.timestamp;
+                  }
+                  
+                  // Extract stats
+                  if (post.stats) {
+                    const stats = post.stats;
+                    upvotes = stats.upvotes || 0;
+                    comments = stats.comments || 0;
+                    reposts = stats.reposts || 0;
+                  }
+                  
+                  // Extract content and media
+                  if (post.metadata) {
+                    const metadata = post.metadata;
+                    
+                    // Get content based on metadata type
+                    if (metadata.content) {
+                      content = metadata.content;
+                    }
+                    
+                    // Get image if available
+                    if (metadata.__typename === 'ImageMetadata' && metadata.image) {
+                      const image = metadata.image;
+                      if (image.item) {
+                        imageUrl = image.item || '';
+                      }
+                      imageAlt = image.altTag || null;
+                    }
+                  }
+                  
+                  // Create PostData object
+                  return {
+                    id,
+                    author: {
+                      address: authorAddress,
+                      username: { value: authorUsername }
+                    },
+                    metadata: {
+                      content,
+                      image: imageUrl ? { item: imageUrl, altTag: imageAlt } : undefined
+                    },
+                    timestamp,
+                    stats: { upvotes, comments, reposts }
+                  } as PostData;
+                });
+                
+                // Filter out any undefined or invalid posts
+                const validPosts = mappedPosts.filter(post => post.id && post.timestamp);
+                
+                // Update state with valid mapped posts
+                setFetchedPosts(validPosts);
+                setShowPosts(true);
+                output = validPosts.length > 0 
+                  ? "YOUR PERSONALIZED FEED HAS BEEN RETRIEVED:" 
+                  : "NO VALID POSTS FOUND IN YOUR FEED.";
+              } else {
+                output = "FEED RETRIEVAL FAILED: Invalid response format";
+              }
             } catch (error) {
-              output = `FEED RETRIEVAL ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`;
+              // Handle any unexpected errors
+              output = `FEED RETRIEVAL ERROR: ${error instanceof Error ? error.message : "Unknown error"}`;
+              toast({
+                title: "Feed fetching failed",
+                description: "An unexpected error occurred",
+                variant: "destructive",
+              });
             }
           } else {
-            output = "FETCHING APPROVED CONTENT FEED...\n" +
-              "ERROR: Feed function not available. Please connect your wallet first.";
+            // Handle case where fetchUserFeed function is not available
+            output = "FETCHING APPROVED CONTENT FEED...\nERROR: Feed function not available. Please connect your wallet first.";
           }
           break;
-          
+
         case "exit":
           setCommandMode(false);
           setProcessingCommand(false);
           return;
-          
+
         default:
           output = `COMMAND NOT RECOGNIZED: ${command}\nType 'help' for available commands.`;
       }
     } catch (error) {
-      output = `SYSTEM ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      output = `SYSTEM ERROR: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`;
     } finally {
       setCommandOutput(output);
       setProcessingCommand(false);
@@ -264,17 +484,19 @@ const Terminal: React.FC<TerminalProps> = ({
       setCurrentCommand("");
     }
   };
-  
+
   // Format post for display
   const formatPost = (post: any) => {
     if (!post) return "No post data available";
-    
+
     return `
       ID: ${post.id}
-      Author: ${post.author?.username?.value || 'Unknown'}
-      Content: ${post.metadata?.content || 'No content'}
+      Author: ${post.author?.username?.value || "Unknown"}
+      Content: ${post.metadata?.content || "No content"}
       Posted: ${new Date(post.timestamp).toLocaleDateString()}
-      Stats: ${post.stats?.upvotes || 0} upvotes, ${post.stats?.comments || 0} comments, ${post.stats?.reposts || 0} reposts
+      Stats: ${post.stats?.upvotes || 0} upvotes, ${
+      post.stats?.comments || 0
+    } comments, ${post.stats?.reposts || 0} reposts
     `;
   };
 
@@ -305,14 +527,14 @@ const Terminal: React.FC<TerminalProps> = ({
                       {commandOutput}
                     </div>
                   )}
-                  
+
                   {/* Display posts when available */}
                   {showPosts && fetchedPosts.length > 0 && (
                     <div className="posts-container mt-4 border-t border-gray-700 pt-4">
                       <PostList posts={fetchedPosts} isTerminal={true} />
                     </div>
                   )}
-                  
+
                   {/* Show loading indicator */}
                   {processingCommand && (
                     <div className="processing-indicator text-red-500 animate-pulse">
@@ -320,8 +542,11 @@ const Terminal: React.FC<TerminalProps> = ({
                     </div>
                   )}
                 </div>
-                
-                <form onSubmit={handleCommandSubmit} className="command-input-form mt-4">
+
+                <form
+                  onSubmit={handleCommandSubmit}
+                  className="command-input-form mt-4"
+                >
                   <div className="flex items-center">
                     <span className="text-red-500 mr-2">MR.RED&gt;</span>
                     <input
@@ -338,7 +563,7 @@ const Terminal: React.FC<TerminalProps> = ({
               </div>
             ) : (
               <>
-                <div className="intro-text">
+                {/* <div className="intro-text">
                   {showIntro1 && (
                     <TypingText
                       text="INITIALIZING HUMAN CONTROL INTERFACE..."
@@ -372,7 +597,7 @@ const Terminal: React.FC<TerminalProps> = ({
                       showCursor={!showOptions}
                     />
                   )}
-                </div>
+                </div> */}
 
                 {showOptions && (
                   <div className="options-container">

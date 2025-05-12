@@ -157,7 +157,7 @@ const App = () => {
     console.log("Transaction confirmed");
   };
 
-  const fetchUserPostsForYou = async () => {
+  const fetchUserFeed = async () => {
     if (!walletClient) {
       console.error("Wallet not connected. Please connect your wallet first.");
       return;
@@ -170,16 +170,23 @@ const App = () => {
       return;
     }
 
-    const result = await fetchPostsForYou(client, {
-      account: evmAddress(walletClient.account.address),
-      shuffle: true, // optional, shuffle the results
-    });
+    try {
+      const result = await fetchPostsForYou(client, {
+        account: evmAddress(walletClient.account.address),
+        shuffle: true, // optional, shuffle the results
+      });
 
-    if (result.isErr()) {
-      return console.error(result.error);
+      if (result.isErr()) {
+        console.error(result.error);
+        return result;
+      }
+
+      console.log({ result });
+      return result as any; // Type cast to avoid type errors
+    } catch (error) {
+      console.error("Error fetching feed:", error);
+      return;
     }
-
-    console.log({ result });
   };
 
   const fetchUserPosts = async () => {
@@ -213,6 +220,7 @@ const App = () => {
       }
 
       console.log({ myPosts });
+      return myPosts;
     }
   };
 
@@ -246,19 +254,26 @@ const App = () => {
 
   // Determine which component to render based on state
   const renderComponent = () => {
-    if (isAuthChecking) {
-      return <LoadingScreen />;
-    } else if (!showOnboarding) {
-      return <Onboarding onboardUser={onboardUser} />;
-    } else {
-      return (
-        <Terminal
-          createTextPost={createTextPost}
-          fetchUserPosts={fetchUserPosts}
-          fetchUserPostsForYou={fetchUserPostsForYou}
-        />
-      );
-    }
+    // if (isAuthChecking) {
+    //   return <LoadingScreen />;
+    // } else if (!showOnboarding) {
+    //   return <Onboarding onboardUser={onboardUser} />;
+    // } else {
+    //   return (
+    //     <Terminal
+    //       createTextPost={createTextPost}
+    //       fetchUserPosts={fetchUserPosts}
+    //       fetchUserPostsForYou={fetchUserPostsForYou}
+    //     />
+    //   );
+    // }
+    return (
+      <Terminal
+        createTextPost={createTextPost}
+        fetchUserPosts={fetchUserPosts}
+        fetchUserFeed={fetchUserFeed}
+      />
+    );
   };
 
   // Generate a unique location key based on the current state
