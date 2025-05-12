@@ -316,16 +316,17 @@ const Terminal: React.FC<TerminalProps> = ({
           if (createTextPost) {
             // Extract post content from command
             const postContent = cmd.substring("create-post".length).trim();
-            
+
             if (!postContent) {
-              output = "ERROR: Post content is required. Usage: create-post <your post content>";
+              output =
+                "ERROR: Post content is required. Usage: create-post <your post content>";
               break;
             }
-            
+
             setCommandOutput(
               `CREATING NEW POST...\nPost content: "${postContent}"\nPlease wait while we process your request.`
             );
-            
+
             try {
               await createTextPost({
                 postContent: postContent,
