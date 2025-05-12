@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import MediaModal from './MediaModal';
+import React, { useState } from "react";
+import MediaModal from "./MediaModal";
 
 interface PostItemProps {
   post: any;
@@ -10,117 +10,128 @@ interface PostItemProps {
 
 const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMedia, setModalMedia] = useState({ url: '', type: '', alt: '' });
+  const [modalMedia, setModalMedia] = useState({ url: "", type: "", alt: "" });
 
   if (!post) return null;
 
   // Extract post data
-  const {
-    id,
-    author,
-    metadata,
-    timestamp,
-    stats,
-  } = post;
+  const { id, author, metadata, timestamp, stats } = post;
 
   // Format date
-  const formattedDate = new Date(timestamp).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  const formattedDate = new Date(timestamp).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 
   // Enhanced media detection
   const getMediaInfo = () => {
-    if (!metadata) return { hasImage: false, hasVideo: false, mediaUrl: null, mediaType: null };
-    
+    if (!metadata)
+      return {
+        hasImage: false,
+        hasVideo: false,
+        mediaUrl: null,
+        mediaType: null,
+      };
+
     // Check for image in various locations
-    if (metadata.__typename === 'ImageMetadata') {
+    if (metadata.__typename === "ImageMetadata") {
       return {
         hasImage: true,
         hasVideo: false,
-        mediaUrl: metadata.image?.item || metadata.image?.uri || '',
-        mediaType: 'image'
+        mediaUrl: metadata.image?.item || metadata.image?.uri || "",
+        mediaType: "image",
       };
     }
-    
+
     // Check for video metadata
-    if (metadata.__typename === 'VideoMetadata') {
+    if (metadata.__typename === "VideoMetadata") {
       return {
         hasImage: false,
         hasVideo: true,
-        mediaUrl: metadata.asset?.uri || '',
-        mediaType: 'video'
+        mediaUrl: metadata.asset?.uri || "",
+        mediaType: "video",
       };
     }
-    
+
     // Check direct image property
     if (metadata.image && (metadata.image.item || metadata.image.uri)) {
       return {
         hasImage: true,
         hasVideo: false,
-        mediaUrl: metadata.image.item || metadata.image.uri || '',
-        mediaType: 'image'
+        mediaUrl: metadata.image.item || metadata.image.uri || "",
+        mediaType: "image",
       };
     }
-    
+
     // Check attachments
     if (metadata.attachments && metadata.attachments.length > 0) {
       const attachment = metadata.attachments[0];
-      const isImage = attachment.type?.includes('IMAGE') || 
-                     attachment.mimeType?.includes('image') ||
-                     /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment.item || '');
-      const isVideo = attachment.type?.includes('VIDEO') || 
-                     attachment.mimeType?.includes('video') ||
-                     /\.(mp4|webm|ogg|mov)$/i.test(attachment.item || '');
-      
+      const isImage =
+        attachment.type?.includes("IMAGE") ||
+        attachment.mimeType?.includes("image") ||
+        /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment.item || "");
+      const isVideo =
+        attachment.type?.includes("VIDEO") ||
+        attachment.mimeType?.includes("video") ||
+        /\.(mp4|webm|ogg|mov)$/i.test(attachment.item || "");
+
       if (isImage) {
         return {
           hasImage: true,
           hasVideo: false,
-          mediaUrl: attachment.item || attachment.uri || '',
-          mediaType: 'image'
+          mediaUrl: attachment.item || attachment.uri || "",
+          mediaType: "image",
         };
       }
-      
+
       if (isVideo) {
         return {
           hasImage: false,
           hasVideo: true,
-          mediaUrl: attachment.item || attachment.uri || '',
-          mediaType: 'video'
+          mediaUrl: attachment.item || attachment.uri || "",
+          mediaType: "video",
         };
       }
     }
-    
+
     // Check for media array
     if (metadata.media && metadata.media.length > 0) {
       const media = metadata.media[0];
-      const isImage = media.mimeType?.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(media.url || '');
-      const isVideo = media.mimeType?.includes('video') || /\.(mp4|webm|ogg|mov)$/i.test(media.url || '');
-      
+      const isImage =
+        media.mimeType?.includes("image") ||
+        /\.(jpg|jpeg|png|gif|webp)$/i.test(media.url || "");
+      const isVideo =
+        media.mimeType?.includes("video") ||
+        /\.(mp4|webm|ogg|mov)$/i.test(media.url || "");
+
       if (isImage) {
         return {
           hasImage: true,
           hasVideo: false,
-          mediaUrl: media.url || media.uri || '',
-          mediaType: 'image'
+          mediaUrl: media.url || media.uri || "",
+          mediaType: "image",
         };
       }
-      
+
       if (isVideo) {
         return {
           hasImage: false,
           hasVideo: true,
-          mediaUrl: media.url || media.uri || '',
-          mediaType: 'video'
+          mediaUrl: media.url || media.uri || "",
+          mediaType: "video",
         };
       }
     }
-    
-    return { hasImage: false, hasVideo: false, mediaUrl: null, mediaType: null };
+
+    return {
+      hasImage: false,
+      hasVideo: false,
+      mediaUrl: null,
+      mediaType: null,
+    };
   };
-  
+
   // Get media information
   const { hasImage, hasVideo, mediaUrl, mediaType } = getMediaInfo();
 
@@ -130,100 +141,112 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
       {isTerminal ? (
         <div className="post-item mb-4 border-b border-gray-700 pb-3 font-mono text-sm">
           <div className="post-header text-red-500">
-            POST_ID: {id ? `${id.substring(0, 10)}...${id.substring(id.length - 10)}` : 'Unknown'}
+            POST_ID:{" "}
+            {id
+              ? `${id.substring(0, 10)}...${id.substring(id.length - 10)}`
+              : "Unknown"}
           </div>
           <div className="post-author">
-            AUTHOR: {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
+            AUTHOR:{" "}
+            {author?.username?.value ||
+              (author?.address && author.address.length > 10
+                ? author.address.substring(0, 10) + "..."
+                : author?.address) ||
+              "Unknown"}
           </div>
-          <div className="post-date">
-            TIMESTAMP: {formattedDate}
-          </div>
+          <div className="post-date">TIMESTAMP: {formattedDate}</div>
           <div className="post-content mt-2 whitespace-pre-wrap">
-            {metadata?.content || 'No content'}
+            {metadata?.content || "No content"}
           </div>
-          
+
           {mediaUrl && (
             <div className="post-media mt-2">
               {hasImage ? (
                 <div>
                   <div className="text-yellow-500 mb-2">[IMAGE ATTACHMENT]</div>
-                  <img 
-                    src={mediaUrl} 
-                    alt={metadata?.image?.altTag || "Post image"} 
+                  <img
+                    src={mediaUrl}
+                    alt={metadata?.image?.altTag || "Post image"}
                     className="max-w-full max-h-64 rounded border border-gray-700 cursor-pointer hover:opacity-90 transition-opacity"
                     loading="lazy"
                     onClick={() => {
                       setModalMedia({
                         url: mediaUrl,
-                        type: 'image',
-                        alt: metadata?.image?.altTag || "Post image"
+                        type: "image",
+                        alt: metadata?.image?.altTag || "Post image",
                       });
                       setIsModalOpen(true);
                     }}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.onerror = null;
-                      target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
+                      target.src =
+                        "https://via.placeholder.com/400x300?text=Image+Unavailable";
                     }}
                   />
                 </div>
               ) : hasVideo ? (
                 <div>
                   <div className="text-yellow-500 mb-2">[VIDEO ATTACHMENT]</div>
-                  <video 
-                    src={mediaUrl} 
-                    controls 
-                    poster={metadata?.asset?.cover?.uri || ''}
+                  <video
+                    src={mediaUrl}
+                    controls
+                    poster={metadata?.asset?.cover?.uri || ""}
                     className="max-w-full max-h-64 rounded border border-gray-700 cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => {
                       setModalMedia({
                         url: mediaUrl,
-                        type: 'video',
-                        alt: 'Video content'
+                        type: "video",
+                        alt: "Video content",
                       });
                       setIsModalOpen(true);
                     }}
                   />
                 </div>
               ) : mediaType ? (
-                <div className="text-yellow-500">[MEDIA ATTACHMENT: {mediaType.toUpperCase()}]</div>
+                <div className="text-yellow-500">
+                  [MEDIA ATTACHMENT: {mediaType.toUpperCase()}]
+                </div>
               ) : null}
             </div>
           )}
-          
+
           <div className="post-stats mt-2 text-gray-400">
-            METRICS: {stats?.upvotes || 0} upvotes | {stats?.comments || 0} comments | {stats?.reposts || 0} reposts
+            METRICS: {stats?.upvotes || 0} upvotes | {stats?.comments || 0}{" "}
+            comments | {stats?.reposts || 0} reposts
           </div>
         </div>
       ) : (
         <div className="post-item mb-4 border border-gray-200 rounded-lg p-4 dark:border-gray-700">
           <div className="post-header flex items-center mb-2">
             <div className="font-medium">
-              {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
+              {author?.username?.value ||
+                (author?.address && author.address.length > 10
+                  ? author.address.substring(0, 10) + "..."
+                  : author?.address) ||
+                "Unknown"}
             </div>
-            <div className="text-gray-500 text-sm ml-2">
-              {formattedDate}
-            </div>
+            <div className="text-gray-500 text-sm ml-2">{formattedDate}</div>
           </div>
-          
+
           <div className="post-content mb-2">
-            {metadata?.content || 'No content'}
+            {metadata?.content || "No content"}
           </div>
-          
+
           {mediaUrl && (
             <div className="post-media mb-2">
               {hasImage ? (
                 <div className="media-container">
-                  <img 
-                    src={mediaUrl} 
-                    alt={metadata?.image?.altTag || "Post image"} 
+                  <img
+                    src={mediaUrl}
+                    alt={metadata?.image?.altTag || "Post image"}
                     className="max-w-full h-auto rounded shadow-md hover:shadow-lg transition-shadow cursor-pointer"
                     loading="lazy"
                     onClick={() => {
                       setModalMedia({
                         url: mediaUrl,
-                        type: 'image',
-                        alt: metadata?.image?.altTag || "Post image"
+                        type: "image",
+                        alt: metadata?.image?.altTag || "Post image",
                       });
                       setIsModalOpen(true);
                     }}
@@ -231,36 +254,50 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
                       // Fallback if image fails to load
                       const target = e.target as HTMLImageElement;
                       target.onerror = null;
-                      target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
+                      target.src =
+                        "https://via.placeholder.com/400x300?text=Image+Unavailable";
                     }}
                   />
                   {metadata?.image?.altTag && (
-                    <div className="text-sm text-gray-500 mt-1">{metadata.image.altTag}</div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {metadata.image.altTag}
+                    </div>
                   )}
                 </div>
               ) : hasVideo ? (
                 <div className="media-container">
-                  <video 
-                    src={mediaUrl} 
-                    controls 
-                    poster={metadata?.asset?.cover?.uri || ''}
+                  <video
+                    src={mediaUrl}
+                    controls
+                    poster={metadata?.asset?.cover?.uri || ""}
                     className="max-w-full h-auto rounded shadow-md cursor-pointer"
                     onClick={() => {
                       setModalMedia({
                         url: mediaUrl,
-                        type: 'video',
-                        alt: 'Video content'
+                        type: "video",
+                        alt: "Video content",
                       });
                       setIsModalOpen(true);
                     }}
                   />
-                  <div className="text-sm text-gray-500 mt-1">Video content</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Video content
+                  </div>
                 </div>
               ) : mediaType ? (
                 <div className="p-4 border border-gray-200 rounded bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
                   <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-blue-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <span>Media attachment: {mediaType}</span>
                   </div>
@@ -268,7 +305,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
               ) : null}
             </div>
           )}
-          
+
           <div className="post-stats flex text-sm text-gray-500 space-x-4">
             <span>{stats?.upvotes || 0} upvotes</span>
             <span>{stats?.comments || 0} comments</span>
@@ -276,9 +313,9 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
           </div>
         </div>
       )}
-      
+
       {/* Media Modal */}
-      <MediaModal 
+      <MediaModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         mediaUrl={modalMedia.url}
