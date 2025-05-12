@@ -2,8 +2,11 @@
 
 import Onboarding from "@/components/onboarding/Onboarding";
 
-const Login = ({ onboardUser }: { onboardUser: () => Promise<void> }) => {
-  return <Onboarding onboardUser={onboardUser} />;
-};
+export default function Login() {
+  const handleOnboardUser = async () => {
+    // Implement onboarding logic here
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  };
 
-export default Login;
+  return <Onboarding onboardUser={handleOnboardUser} />;
+}
