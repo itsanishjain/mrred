@@ -1,6 +1,7 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+import MediaModal from './MediaModal';
 
 interface PostItemProps {
   post: any;
@@ -8,6 +9,9 @@ interface PostItemProps {
 }
 
 const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMedia, setModalMedia] = useState({ url: '', type: '', alt: '' });
+
   if (!post) return null;
 
   // Extract post data
@@ -120,128 +124,168 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
   // Get media information
   const { hasImage, hasVideo, mediaUrl, mediaType } = getMediaInfo();
 
-  // Terminal-style rendering
-  if (isTerminal) {
-    return (
-      <div className="post-item mb-4 border-b border-gray-700 pb-3 font-mono text-sm">
-        <div className="post-header text-red-500">
-          POST_ID: {id ? `${id.substring(0, 10)}...${id.substring(id.length - 10)}` : 'Unknown'}
-        </div>
-        <div className="post-author">
-          AUTHOR: {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
-        </div>
-        <div className="post-date">
-          TIMESTAMP: {formattedDate}
-        </div>
-        <div className="post-content mt-2 whitespace-pre-wrap">
-          {metadata?.content || 'No content'}
-        </div>
-        
-        {mediaUrl && (
-          <div className="post-media mt-2">
-            {hasImage ? (
-              <div>
-                <div className="text-yellow-500 mb-2">[IMAGE ATTACHMENT]</div>
-                <img 
-                  src={mediaUrl} 
-                  alt={metadata?.image?.altTag || "Post image"} 
-                  className="max-w-full max-h-64 rounded border border-gray-700"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
-                  }}
-                />
-              </div>
-            ) : hasVideo ? (
-              <div>
-                <div className="text-yellow-500 mb-2">[VIDEO ATTACHMENT]</div>
-                <video 
-                  src={mediaUrl} 
-                  controls 
-                  poster={metadata?.asset?.cover?.uri || ''}
-                  className="max-w-full max-h-64 rounded border border-gray-700"
-                />
-              </div>
-            ) : mediaType ? (
-              <div className="text-yellow-500">[MEDIA ATTACHMENT: {mediaType.toUpperCase()}]</div>
-            ) : null}
-          </div>
-        )}
-        
-        <div className="post-stats mt-2 text-gray-400">
-          METRICS: {stats?.upvotes || 0} upvotes | {stats?.comments || 0} comments | {stats?.reposts || 0} reposts
-        </div>
-      </div>
-    );
-  }
-  
-  // Regular UI rendering (for non-terminal views)
+  // Render the appropriate view with the modal
   return (
-    <div className="post-item mb-4 border border-gray-200 rounded-lg p-4 dark:border-gray-700">
-      <div className="post-header flex items-center mb-2">
-        <div className="font-medium">
-          {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
+    <>
+      {isTerminal ? (
+        <div className="post-item mb-4 border-b border-gray-700 pb-3 font-mono text-sm">
+          <div className="post-header text-red-500">
+            POST_ID: {id ? `${id.substring(0, 10)}...${id.substring(id.length - 10)}` : 'Unknown'}
+          </div>
+          <div className="post-author">
+            AUTHOR: {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
+          </div>
+          <div className="post-date">
+            TIMESTAMP: {formattedDate}
+          </div>
+          <div className="post-content mt-2 whitespace-pre-wrap">
+            {metadata?.content || 'No content'}
+          </div>
+          
+          {mediaUrl && (
+            <div className="post-media mt-2">
+              {hasImage ? (
+                <div>
+                  <div className="text-yellow-500 mb-2">[IMAGE ATTACHMENT]</div>
+                  <img 
+                    src={mediaUrl} 
+                    alt={metadata?.image?.altTag || "Post image"} 
+                    className="max-w-full max-h-64 rounded border border-gray-700 cursor-pointer hover:opacity-90 transition-opacity"
+                    loading="lazy"
+                    onClick={() => {
+                      setModalMedia({
+                        url: mediaUrl,
+                        type: 'image',
+                        alt: metadata?.image?.altTag || "Post image"
+                      });
+                      setIsModalOpen(true);
+                    }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
+                    }}
+                  />
+                </div>
+              ) : hasVideo ? (
+                <div>
+                  <div className="text-yellow-500 mb-2">[VIDEO ATTACHMENT]</div>
+                  <video 
+                    src={mediaUrl} 
+                    controls 
+                    poster={metadata?.asset?.cover?.uri || ''}
+                    className="max-w-full max-h-64 rounded border border-gray-700 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => {
+                      setModalMedia({
+                        url: mediaUrl,
+                        type: 'video',
+                        alt: 'Video content'
+                      });
+                      setIsModalOpen(true);
+                    }}
+                  />
+                </div>
+              ) : mediaType ? (
+                <div className="text-yellow-500">[MEDIA ATTACHMENT: {mediaType.toUpperCase()}]</div>
+              ) : null}
+            </div>
+          )}
+          
+          <div className="post-stats mt-2 text-gray-400">
+            METRICS: {stats?.upvotes || 0} upvotes | {stats?.comments || 0} comments | {stats?.reposts || 0} reposts
+          </div>
         </div>
-        <div className="text-gray-500 text-sm ml-2">
-          {formattedDate}
-        </div>
-      </div>
-      
-      <div className="post-content mb-2">
-        {metadata?.content || 'No content'}
-      </div>
-      
-      {mediaUrl && (
-        <div className="post-media mb-2">
-          {hasImage ? (
-            <div className="media-container">
-              <img 
-                src={mediaUrl} 
-                alt={metadata?.image?.altTag || "Post image"} 
-                className="max-w-full h-auto rounded shadow-md hover:shadow-lg transition-shadow"
-                loading="lazy"
-                onError={(e) => {
-                  // Fallback if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
-                }}
-              />
-              {metadata?.image?.altTag && (
-                <div className="text-sm text-gray-500 mt-1">{metadata.image.altTag}</div>
-              )}
+      ) : (
+        <div className="post-item mb-4 border border-gray-200 rounded-lg p-4 dark:border-gray-700">
+          <div className="post-header flex items-center mb-2">
+            <div className="font-medium">
+              {author?.username?.value || (author?.address && author.address.length > 10 ? author.address.substring(0, 10) + '...' : author?.address) || 'Unknown'}
             </div>
-          ) : hasVideo ? (
-            <div className="media-container">
-              <video 
-                src={mediaUrl} 
-                controls 
-                poster={metadata?.asset?.cover?.uri || ''}
-                className="max-w-full h-auto rounded shadow-md"
-              />
-              <div className="text-sm text-gray-500 mt-1">Video content</div>
+            <div className="text-gray-500 text-sm ml-2">
+              {formattedDate}
             </div>
-          ) : mediaType ? (
-            <div className="p-4 border border-gray-200 rounded bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
-              <div className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                </svg>
-                <span>Media attachment: {mediaType}</span>
-              </div>
+          </div>
+          
+          <div className="post-content mb-2">
+            {metadata?.content || 'No content'}
+          </div>
+          
+          {mediaUrl && (
+            <div className="post-media mb-2">
+              {hasImage ? (
+                <div className="media-container">
+                  <img 
+                    src={mediaUrl} 
+                    alt={metadata?.image?.altTag || "Post image"} 
+                    className="max-w-full h-auto rounded shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                    loading="lazy"
+                    onClick={() => {
+                      setModalMedia({
+                        url: mediaUrl,
+                        type: 'image',
+                        alt: metadata?.image?.altTag || "Post image"
+                      });
+                      setIsModalOpen(true);
+                    }}
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
+                    }}
+                  />
+                  {metadata?.image?.altTag && (
+                    <div className="text-sm text-gray-500 mt-1">{metadata.image.altTag}</div>
+                  )}
+                </div>
+              ) : hasVideo ? (
+                <div className="media-container">
+                  <video 
+                    src={mediaUrl} 
+                    controls 
+                    poster={metadata?.asset?.cover?.uri || ''}
+                    className="max-w-full h-auto rounded shadow-md cursor-pointer"
+                    onClick={() => {
+                      setModalMedia({
+                        url: mediaUrl,
+                        type: 'video',
+                        alt: 'Video content'
+                      });
+                      setIsModalOpen(true);
+                    }}
+                  />
+                  <div className="text-sm text-gray-500 mt-1">Video content</div>
+                </div>
+              ) : mediaType ? (
+                <div className="p-4 border border-gray-200 rounded bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                    </svg>
+                    <span>Media attachment: {mediaType}</span>
+                  </div>
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          )}
+          
+          <div className="post-stats flex text-sm text-gray-500 space-x-4">
+            <span>{stats?.upvotes || 0} upvotes</span>
+            <span>{stats?.comments || 0} comments</span>
+            <span>{stats?.reposts || 0} reposts</span>
+          </div>
         </div>
       )}
       
-      <div className="post-stats flex text-sm text-gray-500 space-x-4">
-        <span>{stats?.upvotes || 0} upvotes</span>
-        <span>{stats?.comments || 0} comments</span>
-        <span>{stats?.reposts || 0} reposts</span>
-      </div>
-    </div>
+      {/* Media Modal */}
+      <MediaModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        mediaUrl={modalMedia.url}
+        mediaType={modalMedia.type}
+        altText={modalMedia.alt}
+      />
+    </>
   );
 };
 

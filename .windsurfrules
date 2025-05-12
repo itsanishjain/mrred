@@ -54,3 +54,5 @@ Use Prisma for database access.
 - please use docs even if they are in .gitignore
 
 - always write code in smaller components style so it's easier to read and understand
+
+- think harder John Carmack will see your workd don't be sloppy with your code
