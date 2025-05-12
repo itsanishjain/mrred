@@ -26,21 +26,99 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
     day: 'numeric',
   });
 
-  // Check if post has image
-  const hasImage = metadata?.image?.item || 
-    (metadata?.attachments?.length > 0 && 
-     metadata.attachments[0]?.type?.includes('IMAGE'));
+  // Enhanced media detection
+  const getMediaInfo = () => {
+    if (!metadata) return { hasImage: false, hasVideo: false, mediaUrl: null, mediaType: null };
+    
+    // Check for image in various locations
+    if (metadata.__typename === 'ImageMetadata') {
+      return {
+        hasImage: true,
+        hasVideo: false,
+        mediaUrl: metadata.image?.item || metadata.image?.uri || '',
+        mediaType: 'image'
+      };
+    }
+    
+    // Check for video metadata
+    if (metadata.__typename === 'VideoMetadata') {
+      return {
+        hasImage: false,
+        hasVideo: true,
+        mediaUrl: metadata.asset?.uri || '',
+        mediaType: 'video'
+      };
+    }
+    
+    // Check direct image property
+    if (metadata.image && (metadata.image.item || metadata.image.uri)) {
+      return {
+        hasImage: true,
+        hasVideo: false,
+        mediaUrl: metadata.image.item || metadata.image.uri || '',
+        mediaType: 'image'
+      };
+    }
+    
+    // Check attachments
+    if (metadata.attachments && metadata.attachments.length > 0) {
+      const attachment = metadata.attachments[0];
+      const isImage = attachment.type?.includes('IMAGE') || 
+                     attachment.mimeType?.includes('image') ||
+                     /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment.item || '');
+      const isVideo = attachment.type?.includes('VIDEO') || 
+                     attachment.mimeType?.includes('video') ||
+                     /\.(mp4|webm|ogg|mov)$/i.test(attachment.item || '');
+      
+      if (isImage) {
+        return {
+          hasImage: true,
+          hasVideo: false,
+          mediaUrl: attachment.item || attachment.uri || '',
+          mediaType: 'image'
+        };
+      }
+      
+      if (isVideo) {
+        return {
+          hasImage: false,
+          hasVideo: true,
+          mediaUrl: attachment.item || attachment.uri || '',
+          mediaType: 'video'
+        };
+      }
+    }
+    
+    // Check for media array
+    if (metadata.media && metadata.media.length > 0) {
+      const media = metadata.media[0];
+      const isImage = media.mimeType?.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(media.url || '');
+      const isVideo = media.mimeType?.includes('video') || /\.(mp4|webm|ogg|mov)$/i.test(media.url || '');
+      
+      if (isImage) {
+        return {
+          hasImage: true,
+          hasVideo: false,
+          mediaUrl: media.url || media.uri || '',
+          mediaType: 'image'
+        };
+      }
+      
+      if (isVideo) {
+        return {
+          hasImage: false,
+          hasVideo: true,
+          mediaUrl: media.url || media.uri || '',
+          mediaType: 'video'
+        };
+      }
+    }
+    
+    return { hasImage: false, hasVideo: false, mediaUrl: null, mediaType: null };
+  };
   
-  // Check if post has video
-  const hasVideo = metadata?.attachments?.length > 0 && 
-    metadata.attachments[0]?.type?.includes('VIDEO');
-  
-  // Get media URL
-  const mediaUrl = hasImage 
-    ? metadata?.image?.item || metadata?.attachments[0]?.item 
-    : hasVideo 
-      ? metadata?.attachments[0]?.item 
-      : null;
+  // Get media information
+  const { hasImage, hasVideo, mediaUrl, mediaType } = getMediaInfo();
 
   // Terminal-style rendering
   if (isTerminal) {
@@ -62,9 +140,32 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
         {mediaUrl && (
           <div className="post-media mt-2">
             {hasImage ? (
-              <div className="text-yellow-500">[IMAGE ATTACHMENT: {mediaUrl.length > 50 ? mediaUrl.substring(0, 50) + '...' : mediaUrl}]</div>
+              <div>
+                <div className="text-yellow-500 mb-2">[IMAGE ATTACHMENT]</div>
+                <img 
+                  src={mediaUrl} 
+                  alt={metadata?.image?.altTag || "Post image"} 
+                  className="max-w-full max-h-64 rounded border border-gray-700"
+                  loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
+                  }}
+                />
+              </div>
             ) : hasVideo ? (
-              <div className="text-yellow-500">[VIDEO ATTACHMENT: {mediaUrl.length > 50 ? mediaUrl.substring(0, 50) + '...' : mediaUrl}]</div>
+              <div>
+                <div className="text-yellow-500 mb-2">[VIDEO ATTACHMENT]</div>
+                <video 
+                  src={mediaUrl} 
+                  controls 
+                  poster={metadata?.asset?.cover?.uri || ''}
+                  className="max-w-full max-h-64 rounded border border-gray-700"
+                />
+              </div>
+            ) : mediaType ? (
+              <div className="text-yellow-500">[MEDIA ATTACHMENT: {mediaType.toUpperCase()}]</div>
             ) : null}
           </div>
         )}
@@ -95,17 +196,42 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
       {mediaUrl && (
         <div className="post-media mb-2">
           {hasImage ? (
-            <img 
-              src={mediaUrl} 
-              alt={metadata?.image?.altTag || "Post image"} 
-              className="max-w-full h-auto rounded"
-            />
+            <div className="media-container">
+              <img 
+                src={mediaUrl} 
+                alt={metadata?.image?.altTag || "Post image"} 
+                className="max-w-full h-auto rounded shadow-md hover:shadow-lg transition-shadow"
+                loading="lazy"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = 'https://via.placeholder.com/400x300?text=Image+Unavailable';
+                }}
+              />
+              {metadata?.image?.altTag && (
+                <div className="text-sm text-gray-500 mt-1">{metadata.image.altTag}</div>
+              )}
+            </div>
           ) : hasVideo ? (
-            <video 
-              src={mediaUrl} 
-              controls 
-              className="max-w-full h-auto rounded"
-            />
+            <div className="media-container">
+              <video 
+                src={mediaUrl} 
+                controls 
+                poster={metadata?.asset?.cover?.uri || ''}
+                className="max-w-full h-auto rounded shadow-md"
+              />
+              <div className="text-sm text-gray-500 mt-1">Video content</div>
+            </div>
+          ) : mediaType ? (
+            <div className="p-4 border border-gray-200 rounded bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                </svg>
+                <span>Media attachment: {mediaType}</span>
+              </div>
+            </div>
           ) : null}
         </div>
       )}
