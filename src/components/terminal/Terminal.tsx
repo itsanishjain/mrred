@@ -6,12 +6,22 @@ import { useAccount } from "wagmi";
 import TypingText from "./TypingText";
 import MenuOption from "./MenuOption";
 import PostList from "./PostList";
+import MediaUploadModal from "./MediaUploadModal";
 import { Ok, UnexpectedError } from "@lens-protocol/client";
 import { Paginated, AnyPost } from "@lens-protocol/client";
 import { useToast } from "@/hooks/use-toast";
+import { MediaImageMimeType } from "@lens-protocol/metadata";
 
 interface TerminalProps {
   createTextPost?: ({ postContent }: { postContent: string }) => Promise<void>;
+  createImagePost?: ({ postContent, imageData }: { 
+    postContent: string, 
+    imageData: {
+      file: File;
+      altTag: string;
+      mimeType: MediaImageMimeType;
+    } 
+  }) => Promise<void>;
   fetchUserPosts?: () => Promise<void | Ok<
     Paginated<AnyPost>,
     UnexpectedError
@@ -48,6 +58,7 @@ interface PostData {
 
 const Terminal: React.FC<TerminalProps> = ({
   createTextPost,
+  createImagePost,
   fetchUserPosts,
   fetchUserFeed,
 }) => {
@@ -63,6 +74,8 @@ const Terminal: React.FC<TerminalProps> = ({
   const [fetchedPosts, setFetchedPosts] = useState<PostData[]>([]);
   const [showPosts, setShowPosts] = useState(false);
   const [processingCommand, setProcessingCommand] = useState(false);
+  const [showMediaUploadModal, setShowMediaUploadModal] = useState(false);
+  const [pendingPostContent, setPendingPostContent] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Get wallet connection status
@@ -127,6 +140,7 @@ const Terminal: React.FC<TerminalProps> = ({
     clear: "Clear the terminal",
     "fetch-posts": "Fetch your posts",
     "create-post": "Create a new post (Usage: create-post <your post content>)",
+    "create-post --media": "Create a post with an image (Usage: create-post --media <your post content>)",
     "fetch-feed": "Fetch your personalized feed",
     exit: "Exit command mode",
   };
@@ -313,16 +327,30 @@ const Terminal: React.FC<TerminalProps> = ({
           break;
 
         case command.startsWith("create-post") ? command : "":
-          if (createTextPost) {
-            // Extract post content from command
-            const postContent = cmd.substring("create-post".length).trim();
+          // Check if the command includes the --media flag
+          const hasMediaFlag = command.includes("--media");
+          
+          // Extract post content, handling the --media flag if present
+          let postContent = "";
+          if (hasMediaFlag) {
+            postContent = cmd.replace("create-post", "").replace("--media", "").trim();
+          } else {
+            postContent = cmd.substring("create-post".length).trim();
+          }
 
-            if (!postContent) {
-              output =
-                "ERROR: Post content is required. Usage: create-post <your post content>";
-              break;
-            }
+          if (!postContent) {
+            output = hasMediaFlag
+              ? "ERROR: Post content is required. Usage: create-post --media <your post content>"
+              : "ERROR: Post content is required. Usage: create-post <your post content>";
+            break;
+          }
 
+          if (hasMediaFlag && createImagePost) {
+            // Store the content and show the media upload modal
+            setPendingPostContent(postContent);
+            setShowMediaUploadModal(true);
+            output = "MEDIA UPLOAD INTERFACE ACTIVATED\nPlease select an image to upload.";
+          } else if (!hasMediaFlag && createTextPost) {
             setCommandOutput(
               `CREATING NEW POST...\nPost content: "${postContent}"\nPlease wait while we process your request.`
             );
@@ -543,8 +571,44 @@ const Terminal: React.FC<TerminalProps> = ({
     `;
   };
 
+  // Handle media upload completion
+  const handleMediaUpload = async (imageData: {
+    file: File;
+    altTag: string;
+    mimeType: MediaImageMimeType;
+  }) => {
+    if (createImagePost && pendingPostContent) {
+      setCommandOutput(
+        `CREATING NEW POST WITH MEDIA...\nPost content: "${pendingPostContent}"\nMedia: ${imageData.file.name} (${Math.round(imageData.file.size / 1024)} KB)\nPlease wait while we process your request.`
+      );
+
+      try {
+        await createImagePost({
+          postContent: pendingPostContent,
+          imageData: imageData,
+        });
+        setCommandOutput(
+          "POST CREATION SUCCESSFUL!\nYour thoughts and media have been permanently recorded in the digital realm."
+        );
+      } catch (error) {
+        setCommandOutput(
+          `POST CREATION FAILED: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      } finally {
+        setPendingPostContent("");
+      }
+    }
+  };
+
   return (
     <>
+      {/* Media Upload Modal */}
+      <MediaUploadModal
+        isOpen={showMediaUploadModal}
+        onClose={() => setShowMediaUploadModal(false)}
+        onUpload={handleMediaUpload}
+      />
+      
       <div className={`terminal-container ${poweringUp ? "powering-up" : ""}`}>
         <div className="terminal-content">
           <div className="terminal-header">

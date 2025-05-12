@@ -6,6 +6,8 @@ import {
   MetadataAttributeType,
   account,
   textOnly,
+  image,
+  MediaImageMimeType,
 } from "@lens-protocol/metadata";
 import { immutable, StorageClient } from "@lens-chain/storage-client";
 import {
@@ -40,6 +42,7 @@ const App = () => {
   const { data: walletClient } = useWalletClient();
 
   const storageClient = StorageClient.create();
+  // TODO: Replace with your own metadata
   const metadata = account({
     name: "Jane Doe",
     bio: "I am a photographer based in New York City.",
@@ -126,7 +129,7 @@ const App = () => {
       console.error("Wallet not connected. Please connect your wallet first.");
       return;
     }
-    // const client = getPublicClient();
+
     const sessionClient = await getLensClient();
 
     if (sessionClient.isPublicClient()) {
@@ -134,27 +137,142 @@ const App = () => {
       return;
     }
 
-    const metadata = textOnly({
-      content: postContent,
-    });
+    try {
+      console.log("Creating text post with content:", postContent);
 
-    const { uri: postUri } = await storageClient.uploadAsJson(metadata);
+      // Create text-only metadata
+      const metadata = textOnly({
+        content: postContent,
+      });
 
-    console.log(postUri);
+      // Upload metadata to storage
+      const { uri: postUri } = await storageClient.uploadAsJson(metadata);
 
-    console.log("Posting... credirtals", sessionClient.getCredentials());
-    console.log(
-      "Posting... authenitcate",
-      sessionClient.getAuthenticatedUser()
-    );
+      console.log("Text post URI:", postUri);
 
-    const result = await post(sessionClient, {
-      contentUri: postUri,
-    }).andThen(handleOperationWith(walletClient));
+      // // Get the authenticated user
+      // const authenticatedUser = sessionClient.getAuthenticatedUser();
+      // if (authenticatedUser.isErr()) {
+      //   console.error(
+      //     "Failed to get authenticated user:",
+      //     authenticatedUser.error
+      //   );
+      //   throw new Error(
+      //     "Authentication error: " + authenticatedUser.error.message
+      //   );
+      // }
 
-    console.log({ result });
+      // console.log("Authenticated user:", authenticatedUser.value);
 
-    console.log("Transaction confirmed");
+      // Create the post
+      const result = await post(sessionClient, {
+        contentUri: postUri,
+        // Note: In a production app, you would need to handle signless transactions properly
+      }).andThen(handleOperationWith(walletClient));
+
+      if (result.isErr()) {
+        console.error("Error creating post:", result.error);
+        throw new Error("Post creation failed: " + result.error.message);
+      }
+
+      console.log("Text post result:", result.value);
+      console.log("Text post transaction confirmed");
+    } catch (error) {
+      console.error("Error creating text post:", error);
+      throw error;
+    }
+  };
+
+  const createImagePost = async ({
+    postContent,
+    imageData,
+  }: {
+    postContent: string;
+    imageData: {
+      file: File;
+      altTag: string;
+      mimeType: MediaImageMimeType;
+    };
+  }): Promise<void> => {
+    if (!walletClient) {
+      console.error("Wallet not connected. Please connect your wallet first.");
+      return;
+    }
+
+    const sessionClient = await getLensClient();
+
+    if (sessionClient.isPublicClient()) {
+      console.error("Public client");
+      return;
+    }
+
+    try {
+      console.log("Creating image post with:", { postContent, imageData });
+
+      // Upload the image file to storage using the storage client
+      console.log("Uploading image file:", imageData.file.name);
+
+      // Use the immutable ACL for the testnet chain
+      const acl = immutable(chains.testnet.id);
+
+      // Upload the file to storage
+      const { uri: imageUri } = await storageClient.uploadFile(imageData.file, {
+        acl,
+      });
+
+      console.log("Image uploaded successfully, URI:", imageUri);
+
+      // Create image metadata that includes both text and image
+      // Unlike textOnly() which only has text, image() includes both text content and image data
+      const metadata = image({
+        title: postContent.substring(0, 100), // Use first 100 chars of post content as title
+        content: postContent, // This is the text content of the post - same as in textOnly()
+        image: {
+          item: imageUri, // Use the URI from the uploaded image
+          type: imageData.mimeType,
+          altTag: imageData.altTag,
+        },
+      });
+
+      console.log("Created image metadata:", metadata);
+
+      // Upload metadata to storage
+      const { uri: postUri } = await storageClient.uploadAsJson(metadata);
+
+      console.log("Image post URI:", postUri);
+
+      // Get the authenticated user
+      // const authenticatedUser = sessionClient.getAuthenticatedUser();
+      // if (authenticatedUser.isErr()) {
+      //   console.error(
+      //     "Failed to get authenticated user:",
+      //     authenticatedUser.error
+      //   );
+      //   throw new Error(
+      //     "Authentication error: " + authenticatedUser.error.message
+      //   );
+      // }
+
+      // console.log("Authenticated user:", authenticatedUser.value);
+
+      // Create the post
+      const result = await post(sessionClient, {
+        contentUri: postUri,
+        // Note: approveSignless was removed due to type error
+        // In a production app, you would need to handle signless transactions properly
+      }).andThen(handleOperationWith(walletClient));
+
+      if (result.isErr()) {
+        console.error("Error creating post:", result.error);
+        throw new Error("Post creation failed: " + result.error.message);
+      }
+
+      console.log("Image post result:", result.value);
+      console.log("Image post transaction confirmed");
+    } catch (error) {
+      console.error("Error creating image post:", error);
+      throw error;
+    }
   };
 
   const fetchUserFeed = async () => {
@@ -270,6 +388,7 @@ const App = () => {
     return (
       <Terminal
         createTextPost={createTextPost}
+        createImagePost={createImagePost}
         fetchUserPosts={fetchUserPosts}
         fetchUserFeed={fetchUserFeed}
       />
