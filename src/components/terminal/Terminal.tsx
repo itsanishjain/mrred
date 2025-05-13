@@ -26,7 +26,7 @@ interface TerminalProps {
     Paginated<AnyPost>,
     UnexpectedError
   >>;
-  fetchUserFeed?: () => Promise<void | Ok<Paginated<any>, UnexpectedError>>;
+  fetchUserFeed?: (cursor?: string | null) => Promise<void | Ok<Paginated<any>, UnexpectedError>>;
 }
 
 interface PostData {
@@ -76,6 +76,9 @@ const Terminal: React.FC<TerminalProps> = ({
   const [processingCommand, setProcessingCommand] = useState(false);
   const [showMediaUploadModal, setShowMediaUploadModal] = useState(false);
   const [pendingPostContent, setPendingPostContent] = useState("");
+  const [nextFeedCursor, setNextFeedCursor] = useState<string | null>(null);
+  const [hasMoreFeedPosts, setHasMoreFeedPosts] = useState(false);
+  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Get wallet connection status
@@ -142,6 +145,7 @@ const Terminal: React.FC<TerminalProps> = ({
     "create-post": "Create a new post (Usage: create-post <your post content>)",
     "create-post --media": "Create a post with an image (Usage: create-post --media <your post content>)",
     "fetch-feed": "Fetch your personalized feed",
+    "load-more-feed": "Load more posts from your feed",
     exit: "Exit command mode",
   };
 
@@ -173,12 +177,14 @@ const Terminal: React.FC<TerminalProps> = ({
     const command = cmd.trim().toLowerCase();
     let output = "";
 
-    // Reset post view state
-    setShowPosts(false);
-    setFetchedPosts([]);
-
     // Add command to history
     setCommandHistory((prev) => [...prev, `> ${command}`]);
+
+    // Reset post view state (except for load-more-feed command)
+    if (command !== "load-more-feed") {
+      setShowPosts(false);
+      setFetchedPosts([]);
+    }
 
     // Set processing state
     setProcessingCommand(true);
@@ -206,6 +212,334 @@ const Terminal: React.FC<TerminalProps> = ({
           setCommandOutput("");
           setProcessingCommand(false);
           return;
+
+        case "fetch-feed":
+          if (fetchUserFeed) {
+            // Reset pagination state when fetching new feed
+            setNextFeedCursor(null);
+            setHasMoreFeedPosts(false);
+            
+            setCommandOutput(
+              "FETCHING YOUR FEED...\nPlease wait while we retrieve your feed."
+            );
+            try {
+              const feedResult = await fetchUserFeed();
+              
+              // Debug log the raw feed result
+              console.log("Feed result:", feedResult);
+              
+              if (feedResult && "isOk" in feedResult && feedResult.isOk()) {
+                // Debug log the items
+                console.log("Feed items:", feedResult.value.items);
+                // Store pagination info
+                const pageInfo = feedResult.value.pageInfo;
+                setNextFeedCursor(pageInfo.next);
+                setHasMoreFeedPosts(!!pageInfo.next);
+                
+                // Log the feed items structure for debugging
+                if (feedResult.value.items.length > 0) {
+                  console.log("First feed item type:", feedResult.value.items[0].__typename);
+                }
+                
+                // Map feed items to PostData format
+                const mappedPosts = feedResult.value.items.map((item: any) => {
+                  // Check if this is a PostForYou type and unwrap the post
+                  const post = item.__typename === 'PostForYou' ? item.post : item;
+                  // Initialize variables for post data
+                  let content = "";
+                  let imageUrl = "";
+                  let imageAlt = null;
+                  let timestamp = "";
+                  let authorAddress = "";
+                  let authorUsername = "";
+                  let upvotes = 0;
+                  let comments = 0;
+                  let reposts = 0;
+
+                  // Extract post ID
+                  const id = post.id;
+
+                  // Extract author information
+                  if (post.author) {
+                    const author = post.author;
+                    authorAddress = author.address || "";
+
+                    if (author.username) {
+                      authorUsername =
+                        author.username.value ||
+                        author.username.localName ||
+                        "";
+                    }
+                  }
+
+                  // Extract timestamp
+                  if (post.timestamp) {
+                    timestamp = post.timestamp;
+                  }
+
+                  // Extract stats
+                  if (post.stats) {
+                    const stats = post.stats;
+                    upvotes = stats.upvotes || 0;
+                    comments = stats.comments || 0;
+                    reposts = stats.reposts || 0;
+                  }
+
+                  // Extract content and media
+                  if (post.metadata) {
+                    const metadata = post.metadata;
+
+                    // Get content based on metadata type
+                    if (metadata.content) {
+                      content = metadata.content;
+                    }
+
+                    // Get image if available
+                    if (
+                      metadata.__typename === "ImageMetadata" &&
+                      metadata.image
+                    ) {
+                      const image = metadata.image;
+                      if (image.item) {
+                        imageUrl = image.item || "";
+                      }
+                      imageAlt = image.altTag || null;
+                    }
+                  }
+
+                  // Create PostData object
+                  return {
+                    id,
+                    author: {
+                      address: authorAddress,
+                      username: { value: authorUsername },
+                    },
+                    metadata: {
+                      content,
+                      image: imageUrl
+                        ? { item: imageUrl, altTag: imageAlt }
+                        : undefined,
+                    },
+                    timestamp,
+                    stats: { upvotes, comments, reposts },
+                  } as PostData;
+                });
+
+                // Filter out any undefined or invalid posts
+                const validPosts = mappedPosts.filter(
+                  (post) => post.id && post.timestamp
+                );
+
+                // Update state with valid mapped posts
+                setFetchedPosts(validPosts);
+                setShowPosts(true);
+                output =
+                  validPosts.length > 0
+                    ? `YOUR FEED HAS BEEN RETRIEVED: ${validPosts.length} POSTS${hasMoreFeedPosts ? ' (MORE AVAILABLE - USE load-more-feed COMMAND)' : ''}`
+                    : "NO VALID POSTS FOUND IN FEED.";
+              } else {
+                output = "FEED RETRIEVAL FAILED";
+              }
+              // Remove mock data since we're now using real data
+            } catch (error) {
+              output = `ERROR IN FEED RETRIEVAL: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`;
+            }
+          } else {
+            output = "FEED RETRIEVAL FUNCTION NOT AVAILABLE";
+          }
+          break;
+        
+        case "load-more-feed":
+          if (fetchUserFeed && nextFeedCursor && hasMoreFeedPosts) {
+            // Don't reset post view state for load-more-feed
+            setShowPosts(true);
+            setFetchedPosts(prev => prev); // Keep existing posts
+            setIsLoadingMorePosts(true);
+            
+            setCommandOutput(
+              "LOADING MORE POSTS...\nPlease wait while we retrieve additional posts."
+            );
+            
+            try {
+              const feedResult = await fetchUserFeed(nextFeedCursor);
+
+              if (feedResult && "isOk" in feedResult && feedResult.isOk()) {
+                // Update pagination info
+                const pageInfo = feedResult.value.pageInfo;
+                setNextFeedCursor(pageInfo.next);
+                setHasMoreFeedPosts(!!pageInfo.next);
+                
+                // Log the feed items structure for debugging
+                if (feedResult.value.items.length > 0) {
+                  console.log("First feed item type:", feedResult.value.items[0].__typename);
+                }
+                
+                // Map feed items to PostData format
+                const mappedPosts = feedResult.value.items.map((item: any) => {
+                  // Check if this is a PostForYou type and unwrap the post
+                  const post = item.__typename === 'PostForYou' ? item.post : item;
+                  // Initialize variables for post data
+                  let content = "";
+                  let imageUrl = "";
+                  let imageAlt = null;
+                  let timestamp = "";
+                  let authorAddress = "";
+                  let authorUsername = "";
+                  let upvotes = 0;
+                  let comments = 0;
+                  let reposts = 0;
+
+                  // Extract post ID
+                  const id = post.id;
+
+                  // Extract author information
+                  if (post.author) {
+                    const author = post.author;
+                    authorAddress = author.address || "";
+
+                    if (author.username) {
+                      authorUsername =
+                        author.username.value ||
+                        author.username.localName ||
+                        "";
+                    }
+                  }
+
+                  // Extract timestamp
+                  if (post.timestamp) {
+                    timestamp = post.timestamp;
+                  }
+
+                  // Extract stats
+                  if (post.stats) {
+                    const stats = post.stats;
+                    upvotes = stats.upvotes || 0;
+                    comments = stats.comments || 0;
+                    reposts = stats.reposts || 0;
+                  }
+
+                  // Extract content and media
+                  if (post.metadata) {
+                    const metadata = post.metadata;
+
+                    // Get content based on metadata type
+                    if (metadata.content) {
+                      content = metadata.content;
+                    }
+
+                    // Get image if available
+                    if (
+                      metadata.__typename === "ImageMetadata" &&
+                      metadata.image
+                    ) {
+                      const image = metadata.image;
+                      if (image.item) {
+                        imageUrl = image.item || "";
+                      }
+                      imageAlt = image.altTag || null;
+                    }
+                  }
+
+                  // Create PostData object
+                  return {
+                    id,
+                    author: {
+                      address: authorAddress,
+                      username: { value: authorUsername },
+                    },
+                    metadata: {
+                      content,
+                      image: imageUrl
+                        ? { item: imageUrl, altTag: imageAlt }
+                        : undefined,
+                    },
+                    timestamp,
+                    stats: { upvotes, comments, reposts },
+                  } as PostData;
+                });
+
+                // Filter out any undefined or invalid posts
+                const validPosts = mappedPosts.filter(
+                  (post) => post.id && post.timestamp
+                );
+
+                // Append new posts to existing posts
+                setFetchedPosts(prevPosts => [...prevPosts, ...validPosts]);
+                setShowPosts(true);
+                
+                // Add to command history instead of replacing output
+                setCommandHistory(prev => [...prev, 
+                  `LOADED ${validPosts.length} MORE POSTS${hasMoreFeedPosts ? ' (MORE AVAILABLE - USE load-more-feed COMMAND)' : ''}`
+                ]);
+                
+                output = validPosts.length > 0
+                  ? `LOADED ${validPosts.length} MORE POSTS${hasMoreFeedPosts ? ' (MORE AVAILABLE)' : ''}`
+                  : "NO ADDITIONAL POSTS FOUND.";
+              } else {
+                output = "FAILED TO LOAD MORE POSTS";
+              }
+            } catch (error) {
+              output = `ERROR LOADING MORE POSTS: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`;
+            } finally {
+              setIsLoadingMorePosts(false);
+            }
+          } else if (!nextFeedCursor || !hasMoreFeedPosts) {
+            output = "NO MORE POSTS AVAILABLE TO LOAD";
+          } else {
+            output = "LOAD MORE FUNCTION NOT AVAILABLE OR FEED NOT LOADED YET";
+          }
+          break;
+
+        case command.startsWith("create-post") ? command : "":
+          // Check if the command includes the --media flag
+          const hasMediaFlag = command.includes("--media");
+          
+          // Extract post content, handling the --media flag if present
+          let postContent = "";
+          if (hasMediaFlag) {
+            postContent = cmd.replace("create-post", "").replace("--media", "").trim();
+          } else {
+            postContent = cmd.substring("create-post".length).trim();
+          }
+
+          if (!postContent) {
+            output = hasMediaFlag
+              ? "ERROR: Post content is required. Usage: create-post --media <your post content>"
+              : "ERROR: Post content is required. Usage: create-post <your post content>";
+            break;
+          }
+
+          if (hasMediaFlag && createImagePost) {
+            // Store the content and show the media upload modal
+            setPendingPostContent(postContent);
+            setShowMediaUploadModal(true);
+            output = "MEDIA UPLOAD INTERFACE ACTIVATED\nPlease select an image to upload.";
+          } else if (!hasMediaFlag && createTextPost) {
+            setCommandOutput(
+              `CREATING NEW POST...\nPost content: "${postContent}"\nPlease wait while we process your request.`
+            );
+
+            try {
+              await createTextPost({
+                postContent: postContent,
+              });
+              output =
+                "POST CREATION SUCCESSFUL!\nYour thoughts have been permanently recorded in the digital realm.";
+            } catch (error) {
+              output = `POST CREATION FAILED: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`;
+            }
+          } else {
+            output =
+              "POST CREATION INTERFACE:\n" +
+              "ERROR: Creation function not available. Please connect your wallet first.";
+          }
+          break;
 
         case "fetch-posts":
           if (fetchUserPosts) {
@@ -323,53 +657,6 @@ const Terminal: React.FC<TerminalProps> = ({
             output =
               "FETCHING YOUR POSTS...\n" +
               "ERROR: Post retrieval function not available. Please connect your wallet first.";
-          }
-          break;
-
-        case command.startsWith("create-post") ? command : "":
-          // Check if the command includes the --media flag
-          const hasMediaFlag = command.includes("--media");
-          
-          // Extract post content, handling the --media flag if present
-          let postContent = "";
-          if (hasMediaFlag) {
-            postContent = cmd.replace("create-post", "").replace("--media", "").trim();
-          } else {
-            postContent = cmd.substring("create-post".length).trim();
-          }
-
-          if (!postContent) {
-            output = hasMediaFlag
-              ? "ERROR: Post content is required. Usage: create-post --media <your post content>"
-              : "ERROR: Post content is required. Usage: create-post <your post content>";
-            break;
-          }
-
-          if (hasMediaFlag && createImagePost) {
-            // Store the content and show the media upload modal
-            setPendingPostContent(postContent);
-            setShowMediaUploadModal(true);
-            output = "MEDIA UPLOAD INTERFACE ACTIVATED\nPlease select an image to upload.";
-          } else if (!hasMediaFlag && createTextPost) {
-            setCommandOutput(
-              `CREATING NEW POST...\nPost content: "${postContent}"\nPlease wait while we process your request.`
-            );
-
-            try {
-              await createTextPost({
-                postContent: postContent,
-              });
-              output =
-                "POST CREATION SUCCESSFUL!\nYour thoughts have been permanently recorded in the digital realm.";
-            } catch (error) {
-              output = `POST CREATION FAILED: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`;
-            }
-          } else {
-            output =
-              "POST CREATION INTERFACE:\n" +
-              "ERROR: Creation function not available. Please connect your wallet first.";
           }
           break;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { mainnet, testnet, PageSize } from "@lens-protocol/client";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { uri, evmAddress } from "@lens-protocol/client";
 import {
@@ -244,7 +245,7 @@ const App = () => {
     }
   };
 
-  const fetchUserFeed = async () => {
+  const fetchUserFeed = async (cursor?: string | null) => {
     if (!walletClient) {
       console.error("Wallet not connected. Please connect your wallet first.");
       return;
@@ -258,17 +259,68 @@ const App = () => {
     }
 
     try {
+      console.log("Fetching feed with params:", {
+        account: walletClient.account.address,
+        shuffle: cursor ? false : true,
+        cursor: cursor,
+      });
+
       const result = await fetchPostsForYou(client, {
         account: evmAddress(walletClient.account.address),
-        shuffle: true, // optional, shuffle the results
+        shuffle: cursor ? false : true, // Only shuffle on initial load
+        cursor: cursor, // Pass the cursor for pagination
       });
 
       if (result.isErr()) {
-        console.error(result.error);
+        console.error("Feed fetch error:", result.error);
         return result;
       }
 
-      console.log({ result });
+      // Log detailed information about the result
+      if (result.value) {
+        const itemsCount = result.value.items?.length || 0;
+        console.log("Feed fetch success, items count:", itemsCount);
+
+        if (itemsCount > 0) {
+          // Log the structure of the first item to understand its format
+          const firstItem = result.value.items[0];
+          console.log("First item keys:", Object.keys(firstItem));
+
+          // Check if this is a PostForYou type that needs unwrapping
+          if (firstItem.__typename === "PostForYou") {
+            console.log(
+              "Item is PostForYou type, contains post property:",
+              !!firstItem.post
+            );
+            if (firstItem.post) {
+              console.log("Post property keys:", Object.keys(firstItem.post));
+              // Log important fields we need for mapping
+              console.log("Post ID:", firstItem.post.id);
+              console.log("Post author:", firstItem.post.author);
+              console.log("Post metadata:", firstItem.post.metadata);
+              console.log("Post timestamp:", firstItem.post.timestamp);
+            }
+          } else {
+            // Direct post type - only log if we can access these properties safely
+            console.log(
+              "Direct post type, keys available:",
+              Object.keys(firstItem)
+            );
+            // Use optional chaining to avoid errors
+            console.log("Post ID:", firstItem?.post?.id);
+            console.log("Post author:", firstItem?.post?.author);
+            console.log("Post metadata:", firstItem?.post?.metadata);
+            console.log("Post timestamp:", firstItem?.post?.timestamp);
+          }
+        } else {
+          console.log("No items in the feed result");
+        }
+
+        console.log("Page info:", result.value.pageInfo || {});
+      } else {
+        console.log("Feed fetch success, but no value returned");
+      }
+
       return result as any; // Type cast to avoid type errors
     } catch (error) {
       console.error("Error fetching feed:", error);
@@ -390,8 +442,37 @@ const App = () => {
           >
             Post
           </Button>
-          <Button onClick={fetchUserPosts} size="sm" variant="destructive">
-            Fetch
+          <Button
+            onClick={() => fetchUserPosts()}
+            size="sm"
+            variant="destructive"
+          >
+            Posts
+          </Button>
+          <Button
+            onClick={() => fetchUserFeed()}
+            size="sm"
+            variant="destructive"
+          >
+            Feed
+          </Button>
+          <Button
+            onClick={async () => {
+              const result = await fetchUserFeed();
+              if (result?.isOk()) {
+                const nextCursor = result.value.pageInfo.next;
+                if (nextCursor) {
+                  console.log("Next cursor:", nextCursor);
+                  // Test pagination by fetching next page
+                  const nextPage = await fetchUserFeed(nextCursor);
+                  console.log("Next page result:", nextPage);
+                }
+              }
+            }}
+            size="sm"
+            variant="outline"
+          >
+            Test Pagination
           </Button>
         </div>
       )}
