@@ -150,20 +150,6 @@ const App = () => {
 
       console.log("Text post URI:", postUri);
 
-      // // Get the authenticated user
-      // const authenticatedUser = sessionClient.getAuthenticatedUser();
-      // if (authenticatedUser.isErr()) {
-      //   console.error(
-      //     "Failed to get authenticated user:",
-      //     authenticatedUser.error
-      //   );
-      //   throw new Error(
-      //     "Authentication error: " + authenticatedUser.error.message
-      //   );
-      // }
-
-      // console.log("Authenticated user:", authenticatedUser.value);
-
       // Create the post
       const result = await post(sessionClient, {
         contentUri: postUri,
@@ -240,20 +226,6 @@ const App = () => {
       const { uri: postUri } = await storageClient.uploadAsJson(metadata);
 
       console.log("Image post URI:", postUri);
-
-      // Get the authenticated user
-      // const authenticatedUser = sessionClient.getAuthenticatedUser();
-      // if (authenticatedUser.isErr()) {
-      //   console.error(
-      //     "Failed to get authenticated user:",
-      //     authenticatedUser.error
-      //   );
-      //   throw new Error(
-      //     "Authentication error: " + authenticatedUser.error.message
-      //   );
-      // }
-
-      // console.log("Authenticated user:", authenticatedUser.value);
 
       // Create the post
       const result = await post(sessionClient, {
