@@ -253,38 +253,44 @@ const App = () => {
       console.error("Wallet client not available");
       return { success: false, isLiked: isLiked };
     }
-    
+
     try {
-      console.log(`${isLiked ? 'Unliking' : 'Liking'} post with ID:`, postId);
-      
+      console.log(`${isLiked ? "Unliking" : "Liking"} post with ID:`, postId);
+
       // Get an authenticated session client
       const lensClient = await getLensClient();
       if (lensClient.isPublicClient()) {
         console.error("Not authenticated. Please connect your wallet first.");
         return { success: false, isLiked: isLiked };
       }
-      
+
       let result;
       if (isLiked) {
         // Unlike the post
         result = await undoReaction(lensClient, {
           reaction: "UPVOTE",
-          post: postId
+          post: postId,
         });
       } else {
         // Like the post
         result = await addReaction(lensClient, {
           reaction: "UPVOTE",
-          post: postId
+          post: postId,
         });
       }
 
       if (result.isErr()) {
-        console.error(`Error ${isLiked ? 'unliking' : 'liking'} post:`, result.error);
+        console.error(
+          `Error ${isLiked ? "unliking" : "liking"} post:`,
+          result.error
+        );
         return { success: false, isLiked: isLiked };
       }
 
-      console.log(`Post ${isLiked ? 'unliked' : 'liked'} successfully:`, result.value);
+      console.log(
+        `Post ${isLiked ? "unliked" : "liked"} successfully:`,
+        result.value
+      );
       return { success: true, isLiked: !isLiked };
     } catch (error) {
       console.error(`Error in toggle reaction function:`, error);
