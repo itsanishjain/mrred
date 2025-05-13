@@ -153,7 +153,6 @@ const App = () => {
       // Create the post
       const result = await post(sessionClient, {
         contentUri: postUri,
-        // Note: In a production app, you would need to handle signless transactions properly
       }).andThen(handleOperationWith(walletClient));
 
       if (result.isErr()) {
@@ -230,8 +229,6 @@ const App = () => {
       // Create the post
       const result = await post(sessionClient, {
         contentUri: postUri,
-        // Note: approveSignless was removed due to type error
-        // In a production app, you would need to handle signless transactions properly
       }).andThen(handleOperationWith(walletClient));
 
       if (result.isErr()) {
