@@ -38,7 +38,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
   });
 
   const uploadSound = new Howl({
-    src: ["/assets/upload.mp3"],
+    src: ["/assets/upload.wav"],
   });
 
   // Handle keyboard events for terminal-like experience
@@ -92,7 +92,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
       if (dropArea.classList) {
         dropArea.classList.remove("border-green-300");
       }
-      
+
       if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
         handleSelectedFile(e.dataTransfer.files[0]);
       }
@@ -118,7 +118,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
 
     setSelectedFile(file);
     setUploadError("");
-    
+
     // Create preview URL
     const reader = new FileReader();
     reader.onload = () => {
@@ -152,7 +152,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
           progress += Math.random() * 15;
           if (progress > 100) progress = 100;
           setUploadProgress(Math.floor(progress));
-          
+
           if (progress === 100) {
             clearInterval(interval);
             processUploadedImage();
@@ -164,12 +164,15 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
         try {
           // Get mime type from file
           let mimeType = MediaImageMimeType.PNG;
-          if (selectedFile.type === "image/jpeg" || selectedFile.type === "image/jpg") {
+          if (
+            selectedFile.type === "image/jpeg" ||
+            selectedFile.type === "image/jpg"
+          ) {
             mimeType = MediaImageMimeType.JPEG;
           } else if (selectedFile.type === "image/gif") {
             mimeType = MediaImageMimeType.GIF;
           }
-          
+
           // Pass the actual file to the parent component for proper upload
           // This allows the parent to use storageClient.uploadFile directly
           onUpload({
@@ -177,7 +180,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
             altTag: altText,
             mimeType: mimeType,
           });
-          
+
           setIsUploading(false);
           onClose();
         } catch (error) {
@@ -243,7 +246,8 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
                   className="max-h-48 max-w-full mb-2 border border-red-500"
                 />
                 <div className="text-red-400 text-sm">
-                  {selectedFile?.name} ({selectedFile ? Math.round(selectedFile.size / 1024) : 0} KB)
+                  {selectedFile?.name} (
+                  {selectedFile ? Math.round(selectedFile.size / 1024) : 0} KB)
                 </div>
               </div>
             ) : (
