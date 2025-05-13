@@ -14,19 +14,26 @@ import { MediaImageMimeType } from "@lens-protocol/metadata";
 
 interface TerminalProps {
   createTextPost?: ({ postContent }: { postContent: string }) => Promise<void>;
-  createImagePost?: ({ postContent, imageData }: { 
-    postContent: string, 
+  createImagePost?: ({
+    postContent,
+    imageData,
+  }: {
+    postContent: string;
     imageData: {
       file: File;
       altTag: string;
       mimeType: MediaImageMimeType;
-    } 
+    };
   }) => Promise<void>;
   fetchUserPosts?: () => Promise<void | Ok<
     Paginated<AnyPost>,
     UnexpectedError
   >>;
-  fetchUserFeed?: (cursor?: string | null) => Promise<void | Ok<Paginated<any>, UnexpectedError>>;
+  fetchUserFeed?: (
+    cursor?: string | null
+  ) => Promise<void | Ok<Paginated<any>, UnexpectedError>>;
+  likePost?: (postId: string) => Promise<boolean>;
+  toggleReaction?: (postId: string, isLiked: boolean) => Promise<{ success: boolean; isLiked: boolean }>;
 }
 
 interface PostData {
@@ -61,6 +68,7 @@ const Terminal: React.FC<TerminalProps> = ({
   createImagePost,
   fetchUserPosts,
   fetchUserFeed,
+  toggleReaction,
 }) => {
   const [showIntro1, setShowIntro1] = useState(true);
   const [showIntro2, setShowIntro2] = useState(false);
@@ -143,7 +151,8 @@ const Terminal: React.FC<TerminalProps> = ({
     clear: "Clear the terminal",
     "fetch-posts": "Fetch your posts",
     "create-post": "Create a new post (Usage: create-post <your post content>)",
-    "create-post --media": "Create a post with an image (Usage: create-post --media <your post content>)",
+    "create-post --media":
+      "Create a post with an image (Usage: create-post --media <your post content>)",
     "fetch-feed": "Fetch your personalized feed",
     "load-more-feed": "Load more posts from your feed",
     exit: "Exit command mode",
@@ -218,16 +227,16 @@ const Terminal: React.FC<TerminalProps> = ({
             // Reset pagination state when fetching new feed
             setNextFeedCursor(null);
             setHasMoreFeedPosts(false);
-            
+
             setCommandOutput(
               "FETCHING YOUR FEED...\nPlease wait while we retrieve your feed."
             );
             try {
               const feedResult = await fetchUserFeed();
-              
+
               // Debug log the raw feed result
               console.log("Feed result:", feedResult);
-              
+
               if (feedResult && "isOk" in feedResult && feedResult.isOk()) {
                 // Debug log the items
                 console.log("Feed items:", feedResult.value.items);
@@ -235,16 +244,20 @@ const Terminal: React.FC<TerminalProps> = ({
                 const pageInfo = feedResult.value.pageInfo;
                 setNextFeedCursor(pageInfo.next);
                 setHasMoreFeedPosts(!!pageInfo.next);
-                
+
                 // Log the feed items structure for debugging
                 if (feedResult.value.items.length > 0) {
-                  console.log("First feed item type:", feedResult.value.items[0].__typename);
+                  console.log(
+                    "First feed item type:",
+                    feedResult.value.items[0].__typename
+                  );
                 }
-                
+
                 // Map feed items to PostData format
                 const mappedPosts = feedResult.value.items.map((item: any) => {
                   // Check if this is a PostForYou type and unwrap the post
-                  const post = item.__typename === 'PostForYou' ? item.post : item;
+                  const post =
+                    item.__typename === "PostForYou" ? item.post : item;
                   // Initialize variables for post data
                   let content = "";
                   let imageUrl = "";
@@ -335,7 +348,13 @@ const Terminal: React.FC<TerminalProps> = ({
                 setShowPosts(true);
                 output =
                   validPosts.length > 0
-                    ? `YOUR FEED HAS BEEN RETRIEVED: ${validPosts.length} POSTS${hasMoreFeedPosts ? ' (MORE AVAILABLE - USE load-more-feed COMMAND)' : ''}`
+                    ? `YOUR FEED HAS BEEN RETRIEVED: ${
+                        validPosts.length
+                      } POSTS${
+                        hasMoreFeedPosts
+                          ? " (MORE AVAILABLE - USE load-more-feed COMMAND)"
+                          : ""
+                      }`
                     : "NO VALID POSTS FOUND IN FEED.";
               } else {
                 output = "FEED RETRIEVAL FAILED";
@@ -350,18 +369,18 @@ const Terminal: React.FC<TerminalProps> = ({
             output = "FEED RETRIEVAL FUNCTION NOT AVAILABLE";
           }
           break;
-        
+
         case "load-more-feed":
           if (fetchUserFeed && nextFeedCursor && hasMoreFeedPosts) {
             // Don't reset post view state for load-more-feed
             setShowPosts(true);
-            setFetchedPosts(prev => prev); // Keep existing posts
+            setFetchedPosts((prev) => prev); // Keep existing posts
             setIsLoadingMorePosts(true);
-            
+
             setCommandOutput(
               "LOADING MORE POSTS...\nPlease wait while we retrieve additional posts."
             );
-            
+
             try {
               const feedResult = await fetchUserFeed(nextFeedCursor);
 
@@ -370,16 +389,20 @@ const Terminal: React.FC<TerminalProps> = ({
                 const pageInfo = feedResult.value.pageInfo;
                 setNextFeedCursor(pageInfo.next);
                 setHasMoreFeedPosts(!!pageInfo.next);
-                
+
                 // Log the feed items structure for debugging
                 if (feedResult.value.items.length > 0) {
-                  console.log("First feed item type:", feedResult.value.items[0].__typename);
+                  console.log(
+                    "First feed item type:",
+                    feedResult.value.items[0].__typename
+                  );
                 }
-                
+
                 // Map feed items to PostData format
                 const mappedPosts = feedResult.value.items.map((item: any) => {
                   // Check if this is a PostForYou type and unwrap the post
-                  const post = item.__typename === 'PostForYou' ? item.post : item;
+                  const post =
+                    item.__typename === "PostForYou" ? item.post : item;
                   // Initialize variables for post data
                   let content = "";
                   let imageUrl = "";
@@ -466,17 +489,25 @@ const Terminal: React.FC<TerminalProps> = ({
                 );
 
                 // Append new posts to existing posts
-                setFetchedPosts(prevPosts => [...prevPosts, ...validPosts]);
+                setFetchedPosts((prevPosts) => [...prevPosts, ...validPosts]);
                 setShowPosts(true);
-                
+
                 // Add to command history instead of replacing output
-                setCommandHistory(prev => [...prev, 
-                  `LOADED ${validPosts.length} MORE POSTS${hasMoreFeedPosts ? ' (MORE AVAILABLE - USE load-more-feed COMMAND)' : ''}`
+                setCommandHistory((prev) => [
+                  ...prev,
+                  `LOADED ${validPosts.length} MORE POSTS${
+                    hasMoreFeedPosts
+                      ? " (MORE AVAILABLE - USE load-more-feed COMMAND)"
+                      : ""
+                  }`,
                 ]);
-                
-                output = validPosts.length > 0
-                  ? `LOADED ${validPosts.length} MORE POSTS${hasMoreFeedPosts ? ' (MORE AVAILABLE)' : ''}`
-                  : "NO ADDITIONAL POSTS FOUND.";
+
+                output =
+                  validPosts.length > 0
+                    ? `LOADED ${validPosts.length} MORE POSTS${
+                        hasMoreFeedPosts ? " (MORE AVAILABLE)" : ""
+                      }`
+                    : "NO ADDITIONAL POSTS FOUND.";
               } else {
                 output = "FAILED TO LOAD MORE POSTS";
               }
@@ -497,11 +528,14 @@ const Terminal: React.FC<TerminalProps> = ({
         case command.startsWith("create-post") ? command : "":
           // Check if the command includes the --media flag
           const hasMediaFlag = command.includes("--media");
-          
+
           // Extract post content, handling the --media flag if present
           let postContent = "";
           if (hasMediaFlag) {
-            postContent = cmd.replace("create-post", "").replace("--media", "").trim();
+            postContent = cmd
+              .replace("create-post", "")
+              .replace("--media", "")
+              .trim();
           } else {
             postContent = cmd.substring("create-post".length).trim();
           }
@@ -517,7 +551,8 @@ const Terminal: React.FC<TerminalProps> = ({
             // Store the content and show the media upload modal
             setPendingPostContent(postContent);
             setShowMediaUploadModal(true);
-            output = "MEDIA UPLOAD INTERFACE ACTIVATED\nPlease select an image to upload.";
+            output =
+              "MEDIA UPLOAD INTERFACE ACTIVATED\nPlease select an image to upload.";
           } else if (!hasMediaFlag && createTextPost) {
             setCommandOutput(
               `CREATING NEW POST...\nPost content: "${postContent}"\nPlease wait while we process your request.`
@@ -866,7 +901,11 @@ const Terminal: React.FC<TerminalProps> = ({
   }) => {
     if (createImagePost && pendingPostContent) {
       setCommandOutput(
-        `CREATING NEW POST WITH MEDIA...\nPost content: "${pendingPostContent}"\nMedia: ${imageData.file.name} (${Math.round(imageData.file.size / 1024)} KB)\nPlease wait while we process your request.`
+        `CREATING NEW POST WITH MEDIA...\nPost content: "${pendingPostContent}"\nMedia: ${
+          imageData.file.name
+        } (${Math.round(
+          imageData.file.size / 1024
+        )} KB)\nPlease wait while we process your request.`
       );
 
       try {
@@ -879,7 +918,9 @@ const Terminal: React.FC<TerminalProps> = ({
         );
       } catch (error) {
         setCommandOutput(
-          `POST CREATION FAILED: ${error instanceof Error ? error.message : "Unknown error"}`
+          `POST CREATION FAILED: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
         );
       } finally {
         setPendingPostContent("");
@@ -895,7 +936,7 @@ const Terminal: React.FC<TerminalProps> = ({
         onClose={() => setShowMediaUploadModal(false)}
         onUpload={handleMediaUpload}
       />
-      
+
       <div className={`terminal-container ${poweringUp ? "powering-up" : ""}`}>
         <div className="terminal-content">
           <div className="terminal-header">
@@ -925,7 +966,11 @@ const Terminal: React.FC<TerminalProps> = ({
                   {/* Display posts when available */}
                   {showPosts && fetchedPosts.length > 0 && (
                     <div className="posts-container mt-4 border-t border-gray-700 pt-4">
-                      <PostList posts={fetchedPosts} isTerminal={true} />
+                      <PostList 
+                        posts={fetchedPosts} 
+                        isTerminal={true} 
+                        toggleReaction={toggleReaction}
+                      />
                     </div>
                   )}
 

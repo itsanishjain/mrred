@@ -17,6 +17,9 @@ import {
   post,
   fetchPosts,
   fetchPostsForYou,
+  bookmarkPost,
+  addReaction,
+  undoReaction,
 } from "@lens-protocol/client/actions";
 import { useWalletClient } from "wagmi";
 import { useState, useEffect } from "react";
@@ -245,6 +248,50 @@ const App = () => {
     }
   };
 
+  const toggleReaction = async (postId: string, isLiked: boolean) => {
+    if (!walletClient) {
+      console.error("Wallet client not available");
+      return { success: false, isLiked: isLiked };
+    }
+    
+    try {
+      console.log(`${isLiked ? 'Unliking' : 'Liking'} post with ID:`, postId);
+      
+      // Get an authenticated session client
+      const lensClient = await getLensClient();
+      if (lensClient.isPublicClient()) {
+        console.error("Not authenticated. Please connect your wallet first.");
+        return { success: false, isLiked: isLiked };
+      }
+      
+      let result;
+      if (isLiked) {
+        // Unlike the post
+        result = await undoReaction(lensClient, {
+          reaction: "UPVOTE",
+          post: postId
+        });
+      } else {
+        // Like the post
+        result = await addReaction(lensClient, {
+          reaction: "UPVOTE",
+          post: postId
+        });
+      }
+
+      if (result.isErr()) {
+        console.error(`Error ${isLiked ? 'unliking' : 'liking'} post:`, result.error);
+        return { success: false, isLiked: isLiked };
+      }
+
+      console.log(`Post ${isLiked ? 'unliked' : 'liked'} successfully:`, result.value);
+      return { success: true, isLiked: !isLiked };
+    } catch (error) {
+      console.error(`Error in toggle reaction function:`, error);
+      return { success: false, isLiked: isLiked };
+    }
+  };
+
   const fetchUserFeed = async (cursor?: string | null) => {
     if (!walletClient) {
       console.error("Wallet not connected. Please connect your wallet first.");
@@ -412,6 +459,7 @@ const App = () => {
         createImagePost={createImagePost}
         fetchUserPosts={fetchUserPosts}
         fetchUserFeed={fetchUserFeed}
+        toggleReaction={toggleReaction}
       />
     );
   };

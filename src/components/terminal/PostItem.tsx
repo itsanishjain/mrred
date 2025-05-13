@@ -6,9 +6,13 @@ import MediaModal from "./MediaModal";
 interface PostItemProps {
   post: any;
   isTerminal?: boolean;
+  toggleReaction?: (postId: string, isLiked: boolean) => Promise<{ success: boolean; isLiked: boolean }>;
 }
 
-const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
+const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true, toggleReaction }) => {
+  const [isLiking, setIsLiking] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post?.stats?.upvotes || 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMedia, setModalMedia] = useState({ url: "", type: "", alt: "" });
 
@@ -212,7 +216,34 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true }) => {
           )}
 
           <div className="post-stats mt-2 text-gray-400">
-            METRICS: {stats?.upvotes || 0} upvotes | {stats?.comments || 0}{" "}
+            METRICS: 
+            {toggleReaction ? (
+              <button 
+                onClick={async () => {
+                  if (isLiking) return;
+                  setIsLiking(true);
+                  try {
+                    const result = await toggleReaction(id, isLiked);
+                    if (result.success) {
+                      // Update UI state
+                      setIsLiked(result.isLiked);
+                      // Update like count
+                      setLikeCount((prev: number) => result.isLiked ? prev + 1 : Math.max(0, prev - 1));
+                    }
+                  } catch (error) {
+                    console.error('Error toggling reaction:', error);
+                  } finally {
+                    setIsLiking(false);
+                  }
+                }}
+                disabled={isLiking}
+                className={`inline-flex items-center ${isLiking ? 'opacity-50' : isLiked ? 'text-red-500 hover:text-gray-400' : 'hover:text-red-500'} transition-colors mr-1`}
+              >
+                <span className="mr-1">[{isLiking ? 'PROCESSING...' : isLiked ? 'UNLIKE' : 'LIKE'}]</span> {likeCount}
+              </button>
+            ) : (
+              <span>{stats?.upvotes || 0} upvotes</span>
+            )} | {stats?.comments || 0}{" "}
             comments | {stats?.reposts || 0} reposts
           </div>
         </div>
