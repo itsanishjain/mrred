@@ -1,6 +1,12 @@
 "use client";
 
-import { mainnet, testnet, PageSize } from "@lens-protocol/client";
+import {
+  mainnet,
+  testnet,
+  PageSize,
+  postId,
+  PostReferenceType,
+} from "@lens-protocol/client";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { uri, evmAddress } from "@lens-protocol/client";
 import {
@@ -20,6 +26,8 @@ import {
   bookmarkPost,
   addReaction,
   undoReaction,
+  fetchPost,
+  fetchPostReferences,
 } from "@lens-protocol/client/actions";
 import { useWalletClient } from "wagmi";
 import { useState, useEffect } from "react";
@@ -33,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingScreen } from "@/components/terminal-loading";
 import { PageTransition } from "@/components/transitions/PageTransition";
 
-const DEBUG_BUTTONS = false;
+const DEBUG_BUTTONS = true;
 const DELAY = 30000;
 
 const App = () => {
@@ -416,6 +424,33 @@ const App = () => {
     }
   };
 
+  const fetchPostComments = async (lensPostId: string) => {
+    if (!walletClient) {
+      console.error("Wallet not connected. Please connect your wallet first.");
+      return;
+    }
+
+    const client = getPublicClient();
+
+    try {
+      const result = await fetchPostReferences(client, {
+        referencedPost: postId(lensPostId),
+        referenceTypes: [PostReferenceType.CommentOn],
+      });
+
+      if (result.isErr()) {
+        console.error("Error fetching post:", result.error);
+        return;
+      }
+
+      console.log("Post fetched successfully:", result.value);
+      return result.value;
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      return;
+    }
+  };
+
   // Check if user is authenticated
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -527,6 +562,18 @@ const App = () => {
             variant="outline"
           >
             Test Pagination
+          </Button>
+          <Button
+            onClick={async () => {
+              const result = await fetchPostComments(
+                "16985316692732001748345996819097694829110864246656038097073600309179629283048"
+              );
+              console.log("Post comments result:", result);
+            }}
+            size="sm"
+            variant="outline"
+          >
+            Test Post Comments
           </Button>
         </div>
       )}
