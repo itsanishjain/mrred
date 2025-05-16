@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import CommentItem from "./CommentItem";
+import { Paginated, AnyPost } from "@lens-protocol/client";
 import MediaModal from "./MediaModal";
 
 interface CommentDetailProps {
@@ -12,32 +11,23 @@ interface CommentDetailProps {
   comments?: any[];
 }
 
-const CommentDetail: React.FC<CommentDetailProps> = ({
-  post,
-  onBack,
-  comments = [],
-}) => {
+const CommentDetail: React.FC<CommentDetailProps> = ({ post, onBack, comments = [] }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMedia, setModalMedia] = useState({ url: "", type: "", alt: "" });
 
   if (!post) return null;
 
   // Extract post data
-  const { id, author, metadata, timestamp, stats, commentOn } = post;
+  const { id, author, metadata, timestamp, stats } = post;
 
   // Format date as relative time
-  const formattedDate = formatDistanceToNow(new Date(timestamp), {
-    addSuffix: true,
-  });
+  const formattedDate = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
 
-  // Get profile picture
-  const profilePicture = author?.metadata?.picture || "";
-  const username =
-    author?.username?.localName ||
-    author?.username?.value ||
+  // Get username
+  const username = author?.username?.localName || author?.username?.value || 
     (author?.address && author.address.length > 10
       ? author.address.substring(0, 10) + "..."
-      : author?.address) ||
+      : author?.address) || 
     "Unknown";
 
   // Enhanced media detection
@@ -121,213 +111,96 @@ const CommentDetail: React.FC<CommentDetailProps> = ({
 
   // Get media information
   const { hasImage, hasVideo, mediaUrl, mediaType } = getMediaInfo();
-
+  
   // Use provided comments or fallback to empty array
-  const postComments =
-    comments.length > 0
-      ? comments
-      : [
-          {
-            id: "comment1",
-            author: {
-              address: "0x196Fa40f6ffd2a473abf03f6a8D990E6A933A992",
-              username: { localName: "truc301297" },
-              metadata: {
-                picture:
-                  "https://ik.imagekit.io/lens/dfea6ed10c136e4524eee518b491f850cbd5a2f3faf0cb70586d2be1a1346b88_10lHD2aF8.webp",
-              },
-            },
-            metadata: { content: "follow back, thanks sir" },
-            timestamp: new Date().toISOString(),
-            stats: { upvotes: 2, comments: 0 },
-            comments: [],
-          },
-          {
-            id: "comment2",
-            author: {
-              address: "0x5F2b93132F0eb7353432F18dD5B298efd502D9A5",
-              username: { localName: "handlefinder" },
-              metadata: {
-                picture:
-                  "https://gw.ipfs-lens.dev/ipfs/QmduqbcDq8joebckykib5poVeV11XDmdAFAwSxRYUAbzcb",
-              },
-            },
-            metadata: { content: "Great post! I'll check out this bot." },
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            stats: { upvotes: 5, comments: 2 },
-            comments: [
-              {
-                id: "comment2-1",
-                author: {
-                  address: "0x9241a58F5addBfF78E4C5f6a9592d06c5b9B28D4",
-                  username: { localName: "cryptouser" },
-                  metadata: { picture: "" },
-                },
-                metadata: {
-                  content: "I've been using it for a week, it's amazing!",
-                },
-                timestamp: new Date(Date.now() - 3000000).toISOString(),
-                stats: { upvotes: 1, comments: 1 },
-                comments: [
-                  {
-                    id: "comment2-1-1",
-                    author: {
-                      address: "0x5F2b93132F0eb7353432F18dD5B298efd502D9A5",
-                      username: { localName: "handlefinder" },
-                      metadata: {
-                        picture:
-                          "https://gw.ipfs-lens.dev/ipfs/QmduqbcDq8joebckykib5poVeV11XDmdAFAwSxRYUAbzcb",
-                      },
-                    },
-                    metadata: {
-                      content:
-                        "Thanks for the feedback! What features do you like most?",
-                    },
-                    timestamp: new Date(Date.now() - 2000000).toISOString(),
-                    stats: { upvotes: 0, comments: 0 },
-                    comments: [],
-                  },
-                ],
-              },
-              {
-                id: "comment2-2",
-                author: {
-                  address: "0x694200B10F3916C42d2Fab58985583a4e5764C9b",
-                  username: { localName: "web3dev" },
-                  metadata: { picture: "" },
-                },
-                metadata: { content: "Is it available on iOS?" },
-                timestamp: new Date(Date.now() - 2500000).toISOString(),
-                stats: { upvotes: 0, comments: 0 },
-                comments: [],
-              },
-            ],
-          },
-          {
-            id: "comment3",
-            author: {
-              address: "0x1aBb4F7d77c6CaD78291BD5736D3ddf8d8992c13",
-              username: { localName: "cryptoenthusiast" },
-              metadata: { picture: "" },
-            },
-            metadata: {
-              content: "Just installed it. Looking forward to trying it out!",
-            },
-            timestamp: new Date(Date.now() - 7200000).toISOString(),
-            stats: { upvotes: 3, comments: 0 },
-            comments: [],
-          },
-        ];
+  const postComments = comments.length > 0 ? comments : [];
 
   return (
-    <div className="comment-detail bg-black text-white p-4 rounded-md border border-gray-800">
-      {/* Header with back button */}
-      <div className="flex items-center mb-4">
-        <button
-          onClick={onBack}
-          className="mr-2 text-gray-400 hover:text-white"
-        >
-          <span className="font-mono">cd ..</span>
-        </button>
-        <h2 className="text-lg font-mono text-red-500">POST_DETAIL</h2>
-      </div>
-
-      {/* Original post */}
-      <div className="original-post mb-6 border-b border-gray-700 pb-4">
-        <div className="flex items-start">
-          <Avatar className="h-8 w-8 mr-3">
-            <AvatarImage src={profilePicture} alt={username} />
-            <AvatarFallback>
-              {username.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1">
-            <div className="flex items-center">
-              <div className="font-medium text-red-500">{username}</div>
-              <div className="text-gray-500 text-xs ml-2">{formattedDate}</div>
-            </div>
-
-            <div className="post-content my-2">
-              {metadata?.content || "No content"}
-            </div>
-
-            {/* Media content */}
+    <div className="mb-4 font-mono text-sm">
+      <pre className="text-white">
+        <code>
+          <span className="text-red-500">MR.RED:~ $</span> <span className="text-green-500">cat post_{id.substring(0, 8)}.txt</span>
+          
+          <div className="mt-2 border-l-2 border-red-500 pl-2">
+            <span className="text-red-500">AUTHOR:</span> <span className="text-white">{username}</span> <span className="text-gray-500">({formattedDate})</span>
+            <div className="mt-1 text-white">{metadata?.content || "No content"}</div>
+            
             {mediaUrl && (
-              <div className="post-media mb-3">
+              <div className="mt-1">
                 {hasImage ? (
-                  <div className="media-container">
-                    <img
-                      src={mediaUrl}
-                      alt={metadata?.image?.altTag || "Post image"}
-                      className="max-w-full h-auto rounded shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                      loading="lazy"
-                      onClick={() => {
-                        setModalMedia({
-                          url: mediaUrl,
-                          type: "image",
-                          alt: metadata?.image?.altTag || "Post image",
-                        });
-                        setIsModalOpen(true);
-                      }}
-                      onError={(e) => {
-                        // Fallback if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null;
-                        target.src =
-                          "https://via.placeholder.com/400x300?text=Image+Unavailable";
-                      }}
-                    />
-                  </div>
+                  <span 
+                    className="text-yellow-500 cursor-pointer hover:text-yellow-300"
+                    onClick={() => {
+                      setModalMedia({
+                        url: mediaUrl,
+                        type: "image",
+                        alt: metadata?.image?.altTag || "Post image",
+                      });
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    [IMAGE_ATTACHMENT] {metadata?.image?.altTag || ""}
+                  </span>
                 ) : hasVideo ? (
-                  <div className="media-container">
-                    <video
-                      src={mediaUrl}
-                      controls
-                      poster={metadata?.asset?.cover?.uri || ""}
-                      className="max-w-full h-auto rounded shadow-md cursor-pointer"
-                      onClick={() => {
-                        setModalMedia({
-                          url: mediaUrl,
-                          type: "video",
-                          alt: "Video content",
-                        });
-                        setIsModalOpen(true);
-                      }}
-                    />
-                  </div>
+                  <span 
+                    className="text-yellow-500 cursor-pointer hover:text-yellow-300"
+                    onClick={() => {
+                      setModalMedia({
+                        url: mediaUrl,
+                        type: "video",
+                        alt: "Video content",
+                      });
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    [VIDEO_ATTACHMENT]
+                  </span>
                 ) : null}
               </div>
             )}
-
-            {/* Post stats */}
-            <div className="post-stats flex text-sm text-gray-500 space-x-4">
-              <span>{stats?.upvotes || 0} upvotes</span>
-              <span>{stats?.comments || 0} comments</span>
-              <span>{stats?.reposts || 0} reposts</span>
+            
+            <div className="mt-1 text-gray-500">
+              {stats?.upvotes || 0} upvotes | {stats?.comments || 0} comments | {stats?.reposts || 0} reposts
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Comment section header */}
-      <div className="comments-header mb-3">
-        <div className="flex items-center">
-          <span className="font-mono text-green-500 mr-2">$</span>
-          <span className="font-mono">ls -la comments/</span>
-        </div>
-        <div className="text-xs text-gray-500 mt-1 mb-3 font-mono">
-          total {postComments.length} items
-        </div>
-      </div>
-
-      {/* Directory-style comment listing */}
-      <div className="comments-container font-mono">
-        {postComments.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} />
-        ))}
-      </div>
-
+          
+          <div className="mt-4">
+            <span className="text-red-500">MR.RED:~ $</span> <span className="text-green-500">find ./comments -type f | sort</span>
+            
+            <div className="mt-2">
+              {postComments.length === 0 ? (
+                <span className="text-gray-500">No comments found.</span>
+              ) : (
+                postComments.map((comment, index) => {
+                  const commentUsername = comment.author?.username?.localName || 
+                    comment.author?.username?.value || 
+                    (comment.author?.address && comment.author.address.length > 10
+                      ? comment.author.address.substring(0, 10) + "..."
+                      : comment.author?.address) || 
+                    "Unknown";
+                  
+                  const commentDate = formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true });
+                  
+                  return (
+                    <div key={comment.id} className="mb-2">
+                      <div className="text-yellow-500">./comments/{index + 1}_comment_{comment.id.substring(0, 6)}.txt</div>
+                      <div className="pl-4 border-l border-gray-700">
+                        <span className="text-red-500">{commentUsername}</span> <span className="text-gray-500">({commentDate})</span>
+                        <div className="text-white">{comment.metadata?.content || "No content"}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <span className="text-red-500">MR.RED:~ $</span> <span className="cursor-pointer text-green-500 hover:underline" onClick={onBack}>cd ..</span>
+          </div>
+        </code>
+      </pre>
+      
       {/* Media Modal */}
       <MediaModal
         isOpen={isModalOpen}
