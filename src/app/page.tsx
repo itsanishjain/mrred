@@ -490,8 +490,8 @@ const App = () => {
     //     <Terminal
     //       createTextPost={createTextPost}
     //       fetchUserPosts={fetchUserPosts}
-    //       fetchUserPostsForYou={fetchUserPostsForYou}
-    //     />
+    //       fetchUserPostsForYou={ }
+    //     />f
     //   );
     // }
     return (
@@ -501,6 +501,7 @@ const App = () => {
         fetchUserPosts={fetchUserPosts}
         fetchUserFeed={fetchUserFeed}
         toggleReaction={toggleReaction}
+        fetchPostComments={fetchPostComments}
       />
     );
   };

@@ -1,20 +1,36 @@
 "use client";
 
 import React, { useState } from "react";
+import { Paginated, AnyPost } from "@lens-protocol/client";
 import MediaModal from "./MediaModal";
+import CommentDetail from "./CommentDetail";
 
 interface PostItemProps {
   post: any;
   isTerminal?: boolean;
-  toggleReaction?: (postId: string, isLiked: boolean) => Promise<{ success: boolean; isLiked: boolean }>;
+  toggleReaction?: (
+    postId: string,
+    isLiked: boolean
+  ) => Promise<{ success: boolean; isLiked: boolean }>;
+  fetchPostComments?: (
+    postId: string
+  ) => Promise<Paginated<AnyPost> | undefined>;
 }
 
-const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true, toggleReaction }) => {
+const PostItem: React.FC<PostItemProps> = ({
+  post,
+  isTerminal = true,
+  toggleReaction,
+  fetchPostComments,
+}) => {
   const [isLiking, setIsLiking] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post?.stats?.upvotes || 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMedia, setModalMedia] = useState({ url: "", type: "", alt: "" });
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
 
   if (!post) return null;
 
@@ -139,10 +155,45 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true, toggleReac
   // Get media information
   const { hasImage, hasVideo, mediaUrl, mediaType } = getMediaInfo();
 
+  // Handle viewing comments
+  const handleViewComments = async () => {
+    if (!fetchPostComments || !post.id) return;
+
+    setIsLoadingComments(true);
+    try {
+      const result = await fetchPostComments(post.id);
+
+      // Process the result to extract comments
+      if (result) {
+        // Handle Lens Protocol Paginated response format
+        // Convert readonly array to regular array with spread operator
+        const commentsData = [...(result.items || [])];
+        setComments(commentsData);
+        console.log("Fetched comments:", commentsData);
+      } else {
+        // Handle undefined result
+        console.log("No comments found");
+        setComments([]);
+      }
+
+      setShowComments(true);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
   // Render the appropriate view with the modal
   return (
     <>
-      {isTerminal ? (
+      {showComments ? (
+        <CommentDetail
+          post={post}
+          comments={comments}
+          onBack={() => setShowComments(false)}
+        />
+      ) : isTerminal ? (
         <div className="post-item mb-4 border-b border-gray-700 pb-3 font-mono text-sm">
           <div className="post-header text-red-500">
             POST_ID:{" "}
@@ -216,9 +267,9 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true, toggleReac
           )}
 
           <div className="post-stats mt-2 text-gray-400">
-            METRICS: 
+            METRICS:
             {toggleReaction ? (
-              <button 
+              <button
                 onClick={async () => {
                   if (isLiking) return;
                   setIsLiking(true);
@@ -228,23 +279,34 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true, toggleReac
                       // Update UI state
                       setIsLiked(result.isLiked);
                       // Update like count
-                      setLikeCount((prev: number) => result.isLiked ? prev + 1 : Math.max(0, prev - 1));
+                      setLikeCount((prev: number) =>
+                        result.isLiked ? prev + 1 : Math.max(0, prev - 1)
+                      );
                     }
                   } catch (error) {
-                    console.error('Error toggling reaction:', error);
+                    console.error("Error toggling reaction:", error);
                   } finally {
                     setIsLiking(false);
                   }
                 }}
                 disabled={isLiking}
-                className={`inline-flex items-center ${isLiking ? 'opacity-50' : isLiked ? 'text-red-500 hover:text-gray-400' : 'hover:text-red-500'} transition-colors mr-1`}
+                className={`inline-flex items-center ${
+                  isLiking
+                    ? "opacity-50"
+                    : isLiked
+                    ? "text-red-500 hover:text-gray-400"
+                    : "hover:text-red-500"
+                } transition-colors mr-1`}
               >
-                <span className="mr-1">[{isLiking ? 'PROCESSING...' : isLiked ? 'UNLIKE' : 'LIKE'}]</span> {likeCount}
+                <span className="mr-1">
+                  [{isLiking ? "PROCESSING..." : isLiked ? "UNLIKE" : "LIKE"}]
+                </span>{" "}
+                {likeCount}
               </button>
             ) : (
               <span>{stats?.upvotes || 0} upvotes</span>
-            )} | {stats?.comments || 0}{" "}
-            comments | {stats?.reposts || 0} reposts
+            )}{" "}
+            | {stats?.comments || 0} comments | {stats?.reposts || 0} reposts
           </div>
         </div>
       ) : (
@@ -339,7 +401,14 @@ const PostItem: React.FC<PostItemProps> = ({ post, isTerminal = true, toggleReac
 
           <div className="post-stats flex text-sm text-gray-500 space-x-4">
             <span>{stats?.upvotes || 0} upvotes</span>
-            <span>{stats?.comments || 0} comments</span>
+            <span
+              className="cursor-pointer hover:text-white transition-colors"
+              onClick={handleViewComments}
+            >
+              {isLoadingComments
+                ? "Loading..."
+                : `${stats?.comments || 0} comments`}
+            </span>
             <span>{stats?.reposts || 0} reposts</span>
           </div>
         </div>

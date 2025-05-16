@@ -6,6 +6,7 @@ import { useAccount } from "wagmi";
 import TypingText from "./TypingText";
 import MenuOption from "./MenuOption";
 import PostList from "./PostList";
+import PostItem from "./PostItem";
 import MediaUploadModal from "./MediaUploadModal";
 import { Ok, UnexpectedError } from "@lens-protocol/client";
 import { Paginated, AnyPost } from "@lens-protocol/client";
@@ -33,7 +34,13 @@ interface TerminalProps {
     cursor?: string | null
   ) => Promise<void | Ok<Paginated<any>, UnexpectedError>>;
   likePost?: (postId: string) => Promise<boolean>;
-  toggleReaction?: (postId: string, isLiked: boolean) => Promise<{ success: boolean; isLiked: boolean }>;
+  toggleReaction?: (
+    postId: string,
+    isLiked: boolean
+  ) => Promise<{ success: boolean; isLiked: boolean }>;
+  fetchPostComments?: (
+    postId: string
+  ) => Promise<Paginated<AnyPost> | undefined>;
 }
 
 interface PostData {
@@ -69,6 +76,7 @@ const Terminal: React.FC<TerminalProps> = ({
   fetchUserPosts,
   fetchUserFeed,
   toggleReaction,
+  fetchPostComments,
 }) => {
   const [showIntro1, setShowIntro1] = useState(true);
   const [showIntro2, setShowIntro2] = useState(false);
@@ -966,10 +974,11 @@ const Terminal: React.FC<TerminalProps> = ({
                   {/* Display posts when available */}
                   {showPosts && fetchedPosts.length > 0 && (
                     <div className="posts-container mt-4 border-t border-gray-700 pt-4">
-                      <PostList 
-                        posts={fetchedPosts} 
-                        isTerminal={true} 
+                      <PostList
+                        posts={fetchedPosts}
+                        isTerminal={true}
                         toggleReaction={toggleReaction}
+                        fetchPostComments={fetchPostComments}
                       />
                     </div>
                   )}
