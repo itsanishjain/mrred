@@ -306,7 +306,12 @@ const PostItem: React.FC<PostItemProps> = ({
             ) : (
               <span>{stats?.upvotes || 0} upvotes</span>
             )}{" "}
-            | {stats?.comments || 0} comments | {stats?.reposts || 0} reposts
+            | <span 
+                className="cursor-pointer hover:text-red-500 transition-colors"
+                onClick={handleViewComments}
+              >
+                {isLoadingComments ? "LOADING..." : `${stats?.comments || 0} comments`}
+              </span> | {stats?.reposts || 0} reposts
           </div>
         </div>
       ) : (
