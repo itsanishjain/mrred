@@ -31,7 +31,7 @@ export const TerminalText: React.FC<TerminalTextProps> = ({
   animate = false,
 }) => {
   const [randomGlitch, setRandomGlitch] = useState(false);
-  
+
   // Random glitch effect
   useEffect(() => {
     if (glitchEffect) {
@@ -41,11 +41,11 @@ export const TerminalText: React.FC<TerminalTextProps> = ({
           setTimeout(() => setRandomGlitch(false), 150);
         }
       }, 3000);
-      
+
       return () => clearInterval(glitchInterval);
     }
   }, [glitchEffect]);
-  
+
   const variantClasses = {
     default: "text-red-400",
     success: "text-green-400",
@@ -53,11 +53,11 @@ export const TerminalText: React.FC<TerminalTextProps> = ({
     warning: "text-yellow-400",
     info: "text-blue-400",
   };
-  
+
   const highlightClasses = highlight ? "bg-red-900/20 px-2 py-1 rounded" : "";
-  
+
   const content = text || children;
-  
+
   return (
     <motion.div
       initial={animate ? { opacity: 0, y: 10 } : undefined}
@@ -79,7 +79,7 @@ export const TerminalText: React.FC<TerminalTextProps> = ({
             wrapper="span"
             cursor={blinkCursor}
             repeat={0}
-            speed={typingSpeed}
+            speed={typingSpeed as any}
           />
         </div>
       ) : (
