@@ -110,22 +110,11 @@ export const LoadingScreen: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           className="lg:col-span-1 flex flex-col items-center justify-center gap-8"
         >
-          <motion.h1
-            className="text-4xl font-bold tracking-widest text-center"
-            animate={{
-              textShadow: [
-                "0 0 10px #ff0000",
-                "0 0 20px #ff0000",
-                "0 0 10px #ff0000",
-              ],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <motion.h1 className="text-4xl font-bold tracking-widest text-center text-red-500">
             MR.RED
           </motion.h1>
 
-          <ProgressCircle progress={progress} scanCoords={scanCoords} />
+          {/* <ProgressCircle progress={progress} scanCoords={scanCoords} /> */}
 
           <div className="w-full">
             <BinaryStream className="opacity-50" />

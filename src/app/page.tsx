@@ -41,8 +41,8 @@ import { Button } from "@/components/ui/button";
 import { LoadingScreen } from "@/components/terminal-loading";
 import { PageTransition } from "@/components/transitions/PageTransition";
 
-const DEBUG_BUTTONS = true;
-const DELAY = 30000;
+const DEBUG_BUTTONS = false;
+const DELAY = 10000;
 
 const App = () => {
   // State to track whether to show onboarding or terminal
@@ -481,6 +481,8 @@ const App = () => {
 
   // Determine which component to render based on state
   const renderComponent = () => {
+    // return <LoadingScreen />;
+    return <Onboarding onboardUser={onboardUser} />;
     // if (isAuthChecking) {
     //   return <LoadingScreen />;
     // } else if (!showOnboarding) {
@@ -489,21 +491,24 @@ const App = () => {
     //   return (
     //     <Terminal
     //       createTextPost={createTextPost}
+    //       createImagePost={createImagePost}
     //       fetchUserPosts={fetchUserPosts}
-    //       fetchUserPostsForYou={ }
-    //     />f
+    //       fetchUserFeed={fetchUserFeed}
+    //       toggleReaction={toggleReaction}
+    //       fetchPostComments={fetchPostComments}
+    //     />
     //   );
     // }
-    return (
-      <Terminal
-        createTextPost={createTextPost}
-        createImagePost={createImagePost}
-        fetchUserPosts={fetchUserPosts}
-        fetchUserFeed={fetchUserFeed}
-        toggleReaction={toggleReaction}
-        fetchPostComments={fetchPostComments}
-      />
-    );
+    // return (
+    //   <Terminal
+    //     createTextPost={createTextPost}
+    //     createImagePost={createImagePost}
+    //     fetchUserPosts={fetchUserPosts}
+    //     fetchUserFeed={fetchUserFeed}
+    //     toggleReaction={toggleReaction}
+    //     fetchPostComments={fetchPostComments}
+    //   />
+    // );
   };
 
   // Generate a unique location key based on the current state
@@ -515,9 +520,9 @@ const App = () => {
 
   return (
     <div className="min-h-screen w-full overflow-hidden bg-black">
-      <PageTransition location={locationKey}>
-        {renderComponent()}
-      </PageTransition>
+      {/* <PageTransition location={locationKey}> */}
+      {renderComponent()}
+      {/* </PageTransition> */}
 
       {/* Debug buttons - can be removed in production */}
       {DEBUG_BUTTONS && (
