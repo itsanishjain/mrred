@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import terminal effects */
+@import '../styles/terminal-effects.css';
+
 @layer utilities {
   .animate-scroll {
     animation: scroll 60s linear infinite;

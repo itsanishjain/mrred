@@ -1,92 +1,136 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 interface ProgressCircleProps {
   progress: number;
-  scanCoords: { y1: number; y2: number };
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+  glowEffect?: boolean;
+  pulseEffect?: boolean;
+  label?: string;
 }
 
 export const ProgressCircle: React.FC<ProgressCircleProps> = ({
   progress,
-  scanCoords,
+  size = 100,
+  strokeWidth = 8,
+  className = "",
+  glowEffect = true,
+  pulseEffect = true,
+  label,
 }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const [glitchEffect, setGlitchEffect] = useState(false);
+
+  // Random glitch effect
+  useEffect(() => {
+    if (progress < 100) {
+      const glitchInterval = setInterval(() => {
+        if (Math.random() > 0.95) {
+          setGlitchEffect(true);
+          setTimeout(() => setGlitchEffect(false), 150);
+        }
+      }, 2000);
+      
+      return () => clearInterval(glitchInterval);
+    }
+  }, [progress]);
+
   return (
-    <div className="w-64 h-64 md:w-80 md:h-80 relative">
+    <div className={`relative ${className}`}>
       <motion.div
-        className="absolute inset-0 bg-red-700/10 rounded-full filter blur-lg"
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      />
-
-      <div className="w-full h-full relative">
-        {/* Outer ring with gradient */}
-        <motion.div
-          className="absolute inset-0 rounded-full "
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        />
-
-        {/* Progress ring */}
-        <svg className="w-full h-full -rotate-90">
+        animate={pulseEffect ? {
+          scale: [1, 1.02, 1],
+          opacity: [1, 0.9, 1]
+        } : {}}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="relative"
+      >
+        <svg
+          className="transform -rotate-90"
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+        >
+          {/* Background circle */}
           <circle
-            cx="50%"
-            cy="50%"
-            r="45%"
-            fill="none"
-            stroke="url(#progressGradient)"
-            strokeWidth="4"
-            strokeDasharray={`${progress * 2.83} 283`}
-            className="transition-all duration-300 ease-linear drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+            className="text-red-950"
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            r={radius}
+            cx={size / 2}
+            cy={size / 2}
           />
+
+          {/* Progress track */}
+          <circle
+            className="text-red-900/30"
+            stroke="currentColor"
+            strokeWidth={strokeWidth - 2}
+            fill="transparent"
+            r={radius}
+            cx={size / 2}
+            cy={size / 2}
+          />
+
+          {/* Progress circle */}
+          <motion.circle
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className={`${glowEffect ? "drop-shadow-[0_0_3px_rgba(239,68,68,0.7)]" : ""} ${glitchEffect ? "glitch-element" : ""}`}
+            stroke="url(#progressGradient)"
+            strokeWidth={strokeWidth - 2}
+            strokeDasharray={circumference}
+            strokeLinecap="round"
+            fill="transparent"
+            r={radius}
+            cx={size / 2}
+            cy={size / 2}
+          />
+
+          {/* Define gradient for progress */}
           <defs>
-            <linearGradient
-              id="progressGradient"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
-              <stop offset="0%" stopColor="#ef4444" />
-              <stop offset="100%" stopColor="#7f1d1d" />
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#991b1b" />
+              <stop offset="100%" stopColor="#ef4444" />
             </linearGradient>
           </defs>
         </svg>
 
-        {/* Center content */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-red-500">
-              {Math.round(progress)}%
-            </div>
-            <div className="text-sm md:text-base uppercase tracking-widest text-red-700 mt-2 font-mono font-semibold">
-              INITIALIZING
-            </div>
-          </div>
-        </div>
-
-        {/* Rotating markers */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{
-              transform: `rotate(${i * 45}deg) translateY(-150px)`,
+        {/* Progress text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <motion.span 
+            animate={{
+              textShadow: glowEffect ? ["0 0 3px rgba(239,68,68,0.5)", "0 0 5px rgba(239,68,68,0.7)", "0 0 3px rgba(239,68,68,0.5)"] : ["none"]
             }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className={`text-red-500 font-mono text-sm font-bold ${glitchEffect ? "glitch-text" : ""}`}
           >
-            <motion.div
-              className="w-full h-full bg-red-500 rounded-full"
-              animate={{
-                scale: [1, 1.5, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                delay: i * 0.2,
-              }}
-            />
-          </motion.div>
-        ))}
-      </div>
+            {Math.round(progress)}%
+          </motion.span>
+          {label && (
+            <span className="text-red-400/80 font-mono text-xs mt-1">
+              {label}
+            </span>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Decorative elements */}
+      {glowEffect && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-red-500/5 rounded-full blur-md transform scale-110 animate-pulse"></div>
+        </div>
+      )}
     </div>
   );
 };

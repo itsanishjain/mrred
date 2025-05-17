@@ -1,25 +1,33 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Howl } from "howler";
 import { useAccount } from "wagmi";
 import { ConnectKitButton } from "connectkit";
 import { getPublicClient } from "@/lib/lens/client";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertTriangle,
+  Shield,
+  Fingerprint,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Terminal,
+  Wifi,
+  Lock,
+  Key,
+  Database,
+  Cpu,
+} from "lucide-react";
 import { OnboardingTerminal } from "./onboarding-terminal";
-
-export default function OnboardingPage({ onboardUser }: OnboardingProps) {
-  return (
-    <div className="min-h-screen bg-black">
-      <Onboarding onboardUser={onboardUser} />
-    </div>
-  );
-}
+import { TypeAnimation } from "react-type-animation";
 
 interface OnboardingProps {
   onboardUser: () => Promise<void>;
 }
 
-function Onboarding({ onboardUser }: OnboardingProps) {
+export default function Onboarding({ onboardUser }: OnboardingProps) {
   // State management
   const [bootSequenceComplete, setBootSequenceComplete] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -32,6 +40,7 @@ function Onboarding({ onboardUser }: OnboardingProps) {
   const [bootLines, setBootLines] = useState<string[]>([]);
   const [walletInitialized, setWalletInitialized] = useState(false);
   const [walletCheckStarted, setWalletCheckStarted] = useState(false);
+  const [glitchEffect, setGlitchEffect] = useState(false);
 
   // Refs
   const terminalBodyRef = useRef<HTMLDivElement>(null);
@@ -57,15 +66,23 @@ function Onboarding({ onboardUser }: OnboardingProps) {
     volume: 0.5,
   });
 
+  // Random glitch effect
+  useEffect(() => {
+    const glitchInterval = setInterval(() => {
+      setGlitchEffect(true);
+      setTimeout(() => setGlitchEffect(false), 150);
+    }, Math.random() * 5000 + 3000);
+
+    return () => clearInterval(glitchInterval);
+  }, []);
+
   // Boot sequence animation with integrated wallet initialization
   useEffect(() => {
     const bootMessages = [
       "INITIALIZING SYSTEM...",
       "LOADING SECURITY PROTOCOLS...",
-      "ESTABLISHING SECURE CONNECTION...",
-      "ACCESSING CENTRAL DATABASE...",
-      "INITIALIZING WALLET CONNECTION...",
       "PREPARING IDENTITY VERIFICATION...",
+      "INITIALIZING WALLET INTERFACE...",
       "WARNING: UNAUTHORIZED ACCESS WILL RESULT IN IMMEDIATE TERMINATION",
     ];
 
@@ -74,6 +91,7 @@ function Onboarding({ onboardUser }: OnboardingProps) {
     const interval = setInterval(() => {
       if (currentIndex < bootMessages.length) {
         setBootLines((prev) => [...prev, bootMessages[currentIndex]]);
+        typewriterSound.play("type");
 
         // Start wallet initialization when we reach that step
         if (bootMessages[currentIndex].includes("INITIALIZING WALLET")) {
@@ -129,369 +147,445 @@ function Onboarding({ onboardUser }: OnboardingProps) {
             successSound.play();
           } else {
             setHasLensProfile(false);
-            setCurrentStep(2); // Move to registration step
+            setCurrentStep(2); // Move to profile creation step
           }
         } catch (error) {
           console.error("Error checking Lens profile:", error);
           setHasLensProfile(false);
-          setErrorMessage("Error verifying identity. Retrying...");
-          alarmSound.play();
+          setCurrentStep(2); // Move to profile creation step
         } finally {
           setIsLoading(false);
         }
-      } else {
-        setHasLensProfile(false);
-        setIsLoading(false);
       }
     };
 
-    if (isConnected && walletCheckStarted) {
+    if (walletCheckStarted && isConnected) {
       checkLensProfile();
     }
-  }, [isConnected, address, walletCheckStarted, alarmSound, successSound, setCurrentStep, setHasLensProfile, setIsLoading, setErrorMessage]);
+  }, [walletCheckStarted, isConnected, address]);
+
+  // Scroll to bottom of terminal when new content is added
+  useEffect(() => {
+    if (terminalBodyRef.current) {
+      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
+    }
+  }, [bootLines, currentStep, processingRegistration, errorMessage]);
 
   // Handle registration process
   const handleRegistration = async () => {
-    if (!isConnected) {
-      setErrorMessage("WALLET CONNECTION REQUIRED");
-      alarmSound.play();
-      return;
-    }
-
-    setProcessingRegistration(true);
-    setErrorMessage(null);
-
     try {
+      setProcessingRegistration(true);
+      setErrorMessage(null);
+      typewriterSound.play("type");
+
+      // Call the onboarding function from parent component
       await onboardUser();
+
+      // If successful, move to completion step
       setRegistrationComplete(true);
-      setCurrentStep(3); // Move to completion step
+      setCurrentStep(3);
       successSound.play();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      setErrorMessage("PROFILE CREATION FAILED: SYSTEM MALFUNCTION");
+      setErrorMessage(
+        error.message || "ERROR: PROFILE CREATION FAILED. PLEASE TRY AGAIN."
+      );
       alarmSound.play();
     } finally {
       setProcessingRegistration(false);
     }
   };
 
-  // Scroll to bottom when step changes
-  useEffect(() => {
-    if (terminalBodyRef.current) {
-      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
-    }
-  }, [currentStep, processingRegistration, registrationComplete, bootLines]);
-
   return (
-    <div className="w-full h-screen">
-      <div className="absolute top-0 left-0 right-0 text-center z-10 pointer-events-none">
-        <div className="inline-block px-4 py-1 bg-red-800 text-white font-mono text-xs tracking-widest border border-red-600 rounded-md">
-          CLASSIFIED
-        </div>
-      </div>
+    <OnboardingTerminal ref={terminalBodyRef}>
+      <div
+        className={`min-h-[500px] max-w-md mx-auto p-6 font-mono text-red-400 relative ${
+          glitchEffect ? "glitch-text" : ""
+        }`}
+      >
+        {/* Overlay for boot sequence */}
+        <AnimatePresence>
+          {!bootSequenceComplete && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 bg-black/90 backdrop-blur-sm z-10 flex flex-col justify-center p-6"
+            >
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center mb-6"
+              >
+                <div className="h-5 w-5 bg-red-500 mr-3 animate-pulse rounded-sm"></div>
+                <div className="text-xl font-bold bg-gradient-to-r from-red-400 to-red-300 bg-clip-text text-transparent">
+                  MR.RED SECURITY PROTOCOL
+                </div>
+              </motion.div>
 
-      <OnboardingTerminal ref={terminalBodyRef}>
-        <div className="flex flex-col md:flex-row h-full">
-          {/* Left side - Scrolling text */}
-          <div className="w-full md:w-1/2 border-r border-red-800/50 h-full overflow-hidden">
-            <div className="h-full overflow-hidden relative">
-              <div className="animate-scroll font-mono text-red-400 text-sm p-4">
-                {Array(20)
-                  .fill(0)
-                  .map((_, i) => (
-                    <React.Fragment key={i}>
-                      <div className="my-2">
-                        INITIALIZING NEURAL INTERFACE...
-                      </div>
-                      <div className="my-2">DECRYPTING DATA STREAMS...</div>
-                      <div className="my-2">
-                        SYNCHRONIZING PARALLEL REALITIES...
-                      </div>
-                      <div className="my-2">
-                        TRANSMITTING QUANTUM SIGNALS...
-                      </div>
-                      <div className="my-2">
-                        UNLOCKING DIGITAL DIMENSIONS...
-                      </div>
-                      <div className="my-2">
-                        YOU'RE ABOUT TO ENTER THE FUTURE...
-                      </div>
-                    </React.Fragment>
-                  ))}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none"></div>
-              <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black pointer-events-none"></div>
-            </div>
-          </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="mb-6 space-y-2"
+              >
+                {bootLines.map((line, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 * index }}
+                    className={`text-sm ${
+                      line?.includes("WARNING")
+                        ? "text-yellow-400 font-bold"
+                        : "text-red-300"
+                    } mb-1 flex items-start`}
+                  >
+                    <span className="text-red-500 mr-2">{">"}</span>
+                    {line}
+                  </motion.div>
+                ))}
+              </motion.div>
 
-          {/* Right side - Terminal content */}
-          <div
-            className="w-full md:w-1/2 p-4 font-mono text-red-400 overflow-y-auto h-full"
-            ref={terminalBodyRef}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.6 }}
+                className="w-full h-2 bg-red-900/30 overflow-hidden rounded-sm backdrop-blur-sm border border-red-800/30"
+              >
+                <motion.div
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${loadingProgress}%` }}
+                  className="h-full bg-gradient-to-r from-red-700 to-red-500 relative"
+                >
+                  <div className="absolute top-0 left-0 right-0 bottom-0 bg-scanline opacity-30"></div>
+                </motion.div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+                className="text-xs text-red-400 mt-3 flex justify-between items-center"
+              >
+                <span>INITIALIZING SYSTEM...</span>
+                <span className="font-bold">{loadingProgress}%</span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div
+          className={`space-y-6 ${
+            !bootSequenceComplete
+              ? "opacity-0"
+              : "opacity-100 transition-opacity duration-500"
+          }`}
+        >
+          <motion.div
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex items-center justify-between"
           >
-            {/* Boot Sequence */}
-            <div className="space-y-2">
-              {bootLines.map((line, index) => (
-                <div
-                  key={index}
-                  className={`${
-                    line?.includes("WARNING")
-                      ? "text-yellow-500"
-                      : line?.includes("WALLET")
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  {line}
-                </div>
-              ))}
-
-              {!bootSequenceComplete && (
-                <div className="w-full h-2 bg-red-900/30 mt-4 overflow-hidden rounded-sm">
-                  <div
-                    className="h-full bg-red-600 transition-all duration-150"
-                    style={{ width: `${loadingProgress}%` }}
-                  ></div>
-                </div>
-              )}
-
-              {/* Show wallet initialization during boot sequence */}
-              {walletInitialized && !bootSequenceComplete && (
-                <div className="mt-4 p-3 border border-green-800/50 bg-green-900/10 rounded">
-                  <div className="text-green-400 text-sm flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    WALLET INTERFACE INITIALIZING...
-                  </div>
-
-                  <div className="mt-2">
-                    <ConnectKitButton.Custom>
-                      {({ isConnected, isConnecting, show }) => (
-                        <div className="text-xs text-green-300/70">
-                          {isConnecting ? (
-                            <span className="animate-pulse">
-                              ESTABLISHING CONNECTION...
-                            </span>
-                          ) : isConnected ? (
-                            "CONNECTION ESTABLISHED"
-                          ) : (
-                            "PREPARING SECURE CONNECTION..."
-                          )}
-                        </div>
-                      )}
-                    </ConnectKitButton.Custom>
-                  </div>
-                </div>
-              )}
+            <div className="text-lg font-bold border-b border-red-800/50 pb-2 flex items-center">
+              <Terminal className="mr-2 h-5 w-5 text-red-300" />
+              <span className="bg-gradient-to-r from-red-300 to-red-200 bg-clip-text text-transparent">
+                MR.RED IDENTITY VERIFICATION
+              </span>
             </div>
-
-            {/* Progress Indicator */}
-            {bootSequenceComplete && (
-              <div className="flex justify-between my-6 px-2">
-                <div
-                  className={`flex flex-col items-center ${
-                    currentStep >= 1 ? "text-red-500" : "text-red-900"
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                      currentStep >= 1 ? "border-red-500" : "border-red-900"
-                    } ${currentStep > 1 ? "bg-red-500 text-black" : ""}`}
-                  >
-                    1
-                  </div>
-                  <div className="mt-1 text-xs">CONNECT</div>
-                </div>
-
-                <div className="flex-1 self-center px-2">
-                  <div
-                    className={`h-0.5 ${
-                      currentStep > 1 ? "bg-red-500" : "bg-red-900"
-                    }`}
-                  ></div>
-                </div>
-
-                <div
-                  className={`flex flex-col items-center ${
-                    currentStep >= 2 ? "text-red-500" : "text-red-900"
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                      currentStep >= 2 ? "border-red-500" : "border-red-900"
-                    } ${currentStep > 2 ? "bg-red-500 text-black" : ""}`}
-                  >
-                    2
-                  </div>
-                  <div className="mt-1 text-xs">VERIFY</div>
-                </div>
-
-                <div className="flex-1 self-center px-2">
-                  <div
-                    className={`h-0.5 ${
-                      currentStep > 2 ? "bg-red-500" : "bg-red-900"
-                    }`}
-                  ></div>
-                </div>
-
-                <div
-                  className={`flex flex-col items-center ${
-                    currentStep >= 3 ? "text-red-500" : "text-red-900"
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                      currentStep >= 3 ? "border-red-500" : "border-red-900"
-                    } ${currentStep > 3 ? "bg-red-500 text-black" : ""}`}
-                  >
-                    3
-                  </div>
-                  <div className="mt-1 text-xs">ACCESS</div>
-                </div>
-              </div>
+            {walletCheckStarted && (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, type: "spring" }}
+                className={`text-xs px-3 py-1.5 rounded-md flex items-center ${
+                  isConnected
+                    ? "bg-green-900/30 text-green-400 border border-green-800/50"
+                    : "bg-yellow-900/30 text-yellow-400 border border-yellow-800/50"
+                }`}
+              >
+                <Wifi className="mr-2 h-3 w-3" />
+                {isConnected ? "CONNECTED" : "DISCONNECTED"}
+              </motion.div>
             )}
+          </motion.div>
 
-            {/* Step 1: Connect Wallet */}
+          {/* Step 1: Connect Wallet */}
+          <AnimatePresence>
             {bootSequenceComplete && currentStep === 1 && (
-              <div className="space-y-4 mt-6">
-                <div className="text-lg font-bold border-b border-red-800 pb-2">
-                  IDENTITY VERIFICATION REQUIRED
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-5"
+              >
+                <div className="text-sm leading-relaxed">
+                  <TypeAnimation
+                    sequence={[
+                      "IDENTITY VERIFICATION REQUIRED. PLEASE CONNECT YOUR DIGITAL WALLET TO PROCEED.",
+                      1000,
+                    ]}
+                    wrapper="p"
+                    speed={50}
+                    cursor={false}
+                    className="mb-3"
+                  />
+                  <p className="text-red-300/80">
+                    YOUR DIGITAL IDENTITY WILL BE SECURELY VERIFIED THROUGH THE
+                    BLOCKCHAIN NETWORK.
+                  </p>
                 </div>
 
-                <div className="text-yellow-500 font-bold">
-                  CONNECT YOUR DIGITAL WALLET TO PROCEED
-                </div>
-
-                <p className="text-sm">
-                  Your biometric data will be scanned and recorded for future
-                  reference.
-                </p>
-
-                <div className="my-4 h-16 w-full bg-red-900/20 flex items-center justify-center border border-red-800/50 rounded">
-                  <div className="text-xs animate-pulse">
-                    BIOMETRIC SCAN IN PROGRESS
-                  </div>
-                </div>
-
-                <ConnectKitButton.Custom>
-                  {({ isConnected, isConnecting, show }) => (
-                    <button
-                      onClick={() => {
-                        show && show();
-                        typewriterSound.play("type");
-                      }}
-                      className="w-full py-2 bg-red-800 hover:bg-red-700 text-white font-bold border border-red-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors"
-                      disabled={isConnecting}
-                    >
-                      {isConnecting ? (
-                        <span className="animate-pulse">
-                          ESTABLISHING CONNECTION...
-                        </span>
-                      ) : isConnected ? (
-                        "CONNECTION ESTABLISHED"
-                      ) : (
-                        "INITIATE WALLET CONNECTION"
-                      )}
-                    </button>
-                  )}
-                </ConnectKitButton.Custom>
-
-                <p className="text-sm mt-4">
-                  {isConnected ? (
-                    <span className="text-green-500">
-                      WALLET CONNECTED. VERIFYING CREDENTIALS...
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  className="p-5 border border-red-800/50 bg-gradient-to-b from-red-950/50 to-red-900/20 rounded-lg shadow-inner backdrop-blur-sm"
+                >
+                  <div className="flex items-center text-sm mb-4 border-b border-red-800/30 pb-3">
+                    <Lock className="h-4 w-4 mr-2 text-red-400" />
+                    <span className="text-red-300">
+                      SECURITY PROTOCOL: WALLET CONNECTION REQUIRED
                     </span>
-                  ) : (
-                    "AWAITING CONNECTION. TIMEOUT IN 120 SECONDS."
-                  )}
-                </p>
-              </div>
+                  </div>
+
+                  <div className="flex justify-center py-2">
+                    <ConnectKitButton />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-yellow-400 text-xs border border-yellow-500/30 p-4 bg-yellow-950/20 rounded-md flex items-start backdrop-blur-sm"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5 text-yellow-500" />
+                  <div>
+                    WARNING: ONLY CONNECT IF YOU TRUST THIS APPLICATION. YOUR
+                    WALLET CREDENTIALS WILL NEVER BE STORED.
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
+          </AnimatePresence>
 
-            {/* Step 2: Register Profile */}
+          {/* Step 2: Create Profile */}
+          <AnimatePresence>
             {bootSequenceComplete && currentStep === 2 && (
-              <div className="space-y-4 mt-6">
-                <div className="text-lg font-bold border-b border-red-800 pb-2">
-                  DIGITAL IDENTITY CREATION
-                </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-5"
+              >
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-lg font-bold border-b border-red-800/50 pb-2 flex items-center"
+                >
+                  <Fingerprint className="mr-2 h-5 w-5 text-red-300" />
+                  <span className="bg-gradient-to-r from-red-300 to-red-200 bg-clip-text text-transparent">
+                    DIGITAL IDENTITY CREATION
+                  </span>
+                </motion.div>
 
-                <div className="text-yellow-500 font-bold">
-                  NO EXISTING PROFILE DETECTED
-                </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-sm leading-relaxed"
+                >
+                  <p className="mb-3 text-green-400 flex items-center">
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    WALLET CONNECTED. PROCEED WITH DIGITAL IDENTITY CREATION.
+                  </p>
+                  <p className="text-red-300/80">
+                    THIS PROCESS WILL REGISTER YOUR EXISTENCE IN THE
+                    DECENTRALIZED NETWORK.
+                  </p>
+                </motion.div>
 
-                <p className="text-sm">
-                  You must register your digital identity to access the system.
-                </p>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="p-5 border border-red-800/50 bg-gradient-to-b from-red-950/50 to-red-900/20 rounded-lg shadow-inner backdrop-blur-sm"
+                >
+                  <div className="flex items-center mb-4 border-b border-red-800/30 pb-3">
+                    <Database className="h-4 w-4 mr-2 text-red-400" />
+                    <span className="text-red-300 text-sm">
+                      BLOCKCHAIN REGISTRATION
+                    </span>
+                  </div>
 
-                <p className="text-sm">
-                  This process is irreversible. Your data will be permanently
-                  recorded on the blockchain.
-                </p>
+                  <p className="text-sm mb-4 text-red-300/90">
+                    This process is irreversible. Your data will be permanently
+                    recorded on the blockchain.
+                  </p>
 
-                <button
+                  <div className="mt-3 flex items-center text-xs text-red-400/80 border-t border-red-800/30 pt-3">
+                    <AlertTriangle className="mr-2 h-3 w-3 text-yellow-500" />
+                    By proceeding, you consent to all terms and conditions.
+                  </div>
+                </motion.div>
+
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     handleRegistration();
                     typewriterSound.play("type");
                   }}
-                  className="w-full py-2 bg-red-800 hover:bg-red-700 text-white font-bold border border-red-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors"
+                  className="w-full py-3.5 bg-gradient-to-r from-red-800 to-red-700 hover:from-red-700 hover:to-red-600 text-white font-bold border border-red-600/50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-all shadow-lg shadow-red-900/30 disabled:opacity-70 disabled:cursor-not-allowed"
                   disabled={processingRegistration}
                 >
                   {processingRegistration ? (
-                    <span className="animate-pulse">
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="animate-spin mr-2 h-4 w-4" />
                       CREATING DIGITAL IDENTITY...
                     </span>
                   ) : (
-                    "INITIATE PROFILE CREATION"
+                    <span className="flex items-center justify-center">
+                      <Key className="mr-2 h-4 w-4" />
+                      INITIATE PROFILE CREATION
+                    </span>
                   )}
-                </button>
+                </motion.button>
 
                 {processingRegistration && (
-                  <div className="w-full h-2 bg-red-900/30 mt-4 overflow-hidden rounded-sm">
-                    <div className="h-full bg-red-600 animate-pulse w-full"></div>
-                  </div>
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    className="w-full h-2 bg-red-900/30 mt-4 overflow-hidden rounded-md backdrop-blur-sm border border-red-800/30"
+                  >
+                    <div className="h-full bg-gradient-to-r from-red-700 to-red-500 animate-pulse w-full relative">
+                      <div className="absolute top-0 left-0 right-0 bottom-0 bg-scanline opacity-30"></div>
+                    </div>
+                  </motion.div>
                 )}
 
-                {errorMessage && (
-                  <div className="text-yellow-500 border border-yellow-500 p-2 mt-4 bg-yellow-500/10 rounded">
-                    {errorMessage}
-                  </div>
-                )}
-              </div>
+                <AnimatePresence>
+                  {errorMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-yellow-400 border border-yellow-500/30 p-4 mt-4 bg-yellow-950/20 rounded-md flex items-start backdrop-blur-sm"
+                    >
+                      <XCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5 text-yellow-500" />
+                      <div>{errorMessage}</div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             )}
+          </AnimatePresence>
 
-            {/* Step 3: Complete */}
+          {/* Step 3: Complete */}
+          <AnimatePresence>
             {bootSequenceComplete && currentStep === 3 && (
-              <div className="space-y-4 mt-6">
-                <div className="text-lg font-bold border-b border-green-800 pb-2 text-green-500">
-                  IDENTITY VERIFICATION COMPLETE
-                </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-5 mt-6"
+              >
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-lg font-bold border-b border-green-800/50 pb-2 text-green-400 flex items-center"
+                >
+                  <CheckCircle2 className="mr-2 h-5 w-5" />
+                  <span className="bg-gradient-to-r from-green-300 to-green-200 bg-clip-text text-transparent">
+                    IDENTITY VERIFICATION COMPLETE
+                  </span>
+                </motion.div>
 
-                <div className="text-green-500 font-bold">ACCESS GRANTED</div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-green-400 font-bold flex items-center"
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  ACCESS GRANTED
+                </motion.div>
 
-                <p className="text-sm">
-                  Your digital identity has been verified and recorded in the
-                  central database.
-                </p>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="p-5 border border-green-800/50 bg-gradient-to-b from-green-950/30 to-green-900/10 rounded-lg shadow-inner backdrop-blur-sm"
+                >
+                  <div className="flex items-center mb-4 border-b border-green-800/30 pb-3">
+                    <Database className="h-4 w-4 mr-2 text-green-400" />
+                    <span className="text-green-300 text-sm">
+                      PROFILE CREATED
+                    </span>
+                  </div>
 
-                <p className="text-sm">
-                  You now have access to the MR.RED terminal system.
-                </p>
+                  <p className="text-sm text-green-300/90">
+                    Your digital identity has been verified and recorded in the
+                    central database.
+                  </p>
 
-                <a
+                  <p className="text-sm mt-3 text-green-300/90">
+                    You now have access to the MR.RED terminal system.
+                  </p>
+
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+                    className="mt-6 flex items-center justify-center"
+                  >
+                    <div className="w-20 h-20 rounded-full bg-green-900/30 border border-green-500/50 flex items-center justify-center shadow-lg shadow-green-900/20">
+                      <CheckCircle2 className="h-10 w-10 text-green-400" />
+                    </div>
+                  </motion.div>
+                </motion.div>
+
+                <motion.a
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   href="/"
-                  className="block w-full py-2 bg-green-800 hover:bg-green-700 text-white font-bold border border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-center"
+                  className="block w-full py-3.5 bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 text-white font-bold border border-green-600/50 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-all text-center shadow-lg shadow-green-900/30"
                 >
                   PROCEED TO TERMINAL
-                </a>
+                </motion.a>
 
-                <p className="text-yellow-500 text-sm mt-4 border border-yellow-500/50 p-2 bg-yellow-500/10 rounded">
-                  WARNING: ALL ACTIONS WITHIN THE TERMINAL ARE MONITORED AND
-                  RECORDED
-                </p>
-              </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-yellow-400 text-sm mt-4 border border-yellow-500/30 p-4 bg-yellow-950/20 rounded-md flex items-start backdrop-blur-sm"
+                >
+                  <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5 text-yellow-500" />
+                  <div>
+                    WARNING: ALL ACTIONS WITHIN THE TERMINAL ARE MONITORED AND
+                    RECORDED
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </div>
-      </OnboardingTerminal>
-    </div>
+      </div>
+    </OnboardingTerminal>
   );
 }

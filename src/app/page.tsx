@@ -481,8 +481,8 @@ const App = () => {
 
   // Determine which component to render based on state
   const renderComponent = () => {
-    // return <LoadingScreen />;
-    return <Onboarding onboardUser={onboardUser} />;
+    return <LoadingScreen onboardUser={onboardUser} />;
+    // return <Onboarding onboardUser={onboardUser} />;
     // if (isAuthChecking) {
     //   return <LoadingScreen />;
     // } else if (!showOnboarding) {
