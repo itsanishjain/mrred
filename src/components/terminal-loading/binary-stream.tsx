@@ -1,29 +1,54 @@
-import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState, useRef } from "react";
+import { motion } from "framer-motion";
 
 interface BinaryStreamProps {
   length?: number;
   className?: string;
   speed?: number;
   density?: number;
+  height?: number;
 }
 
 export const BinaryStream: React.FC<BinaryStreamProps> = ({
-  length = 100,
+  length = 200,
   className = "",
   speed = 100,
   density = 10,
+  height = 6,
 }) => {
-  const [stream, setStream] = useState<Array<{value: string, highlight: boolean}>>([]);
-  const [glitchPosition, setGlitchPosition] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(100);
+  const [stream, setStream] = useState<Array<{value: string, highlight: boolean, color: string}>>([]);
 
+  // Calculate columns based on container width
   useEffect(() => {
+    if (containerRef.current) {
+      const calculateColumns = () => {
+        const containerWidth = containerRef.current?.clientWidth || 0;
+        const newColumns = Math.floor(containerWidth / 12); // Adjust based on character width
+        setColumns(newColumns);
+      };
+
+      calculateColumns();
+      window.addEventListener('resize', calculateColumns);
+      return () => window.removeEventListener('resize', calculateColumns);
+    }
+  }, []);
+
+  // Generate and update stream
+  useEffect(() => {
+    if (columns === 0) return;
+    
     // Generate initial stream
-    const initialStream = Array(length)
+    const rows = height;
+    const totalCells = rows * columns;
+    const initialStream = Array(totalCells)
       .fill(0)
       .map(() => ({
         value: Math.random() > 0.5 ? "1" : "0",
-        highlight: Math.random() > 0.9
+        highlight: Math.random() > 0.92,
+        color: Math.random() > 0.98 ? "#f87171" : 
+               Math.random() > 0.8 ? "#ef4444" : "#991b1b"
       }));
     setStream(initialStream);
 
@@ -32,49 +57,44 @@ export const BinaryStream: React.FC<BinaryStreamProps> = ({
       setStream((prev) => {
         const newStream = [...prev];
         // Update random positions
-        for (let i = 0; i < Math.floor(length / density); i++) {
-          const pos = Math.floor(Math.random() * length);
+        for (let i = 0; i < Math.floor(totalCells / density); i++) {
+          const pos = Math.floor(Math.random() * totalCells);
           newStream[pos] = {
             value: Math.random() > 0.5 ? "1" : "0",
-            highlight: Math.random() > 0.9
+            highlight: Math.random() > 0.92,
+            color: Math.random() > 0.98 ? "#f87171" : 
+                   Math.random() > 0.8 ? "#ef4444" : "#991b1b"
           };
         }
         return newStream;
       });
-      
-      // Random glitch effect
-      if (Math.random() > 0.9) {
-        setGlitchPosition(Math.floor(Math.random() * length));
-        setTimeout(() => setGlitchPosition(null), 150);
-      }
     }, speed);
 
     return () => clearInterval(interval);
-  }, [length, speed, density]);
+  }, [columns, speed, density, height]);
 
   return (
     <div
-      className={`font-mono text-xs overflow-hidden ${className}`}
+      ref={containerRef}
+      className={`font-mono text-xs overflow-hidden w-full ${className}`}
     >
-      <div className="flex flex-wrap">
-        <AnimatePresence>
-          {stream.map((bit, index) => (
-            <motion.span
-              key={index}
-              initial={{ opacity: 0 }}
-              animate={{
-                opacity: 1,
-                color: bit.highlight ? "#f87171" : bit.value === "1" ? "#ef4444" : "#991b1b",
-                scale: bit.highlight ? 1.2 : 1,
-                textShadow: bit.highlight ? "0 0 5px rgba(239, 68, 68, 0.7)" : "none"
-              }}
-              transition={{ duration: 0.2 }}
-              className={`w-4 inline-block ${index === glitchPosition ? "glitch-text" : ""}`}
-            >
-              {bit.value}
-            </motion.span>
-          ))}
-        </AnimatePresence>
+      <div className="grid" style={{ 
+        gridTemplateColumns: `repeat(${columns}, minmax(8px, 1fr))`,
+        gap: '0px'
+      }}>
+        {stream.map((bit, index) => (
+          <div
+            key={index}
+            className="inline-block text-center"
+            style={{ 
+              color: bit.color,
+              textShadow: bit.highlight ? "0 0 5px rgba(239, 68, 68, 0.7)" : "none",
+              opacity: bit.highlight ? 1 : 0.8
+            }}
+          >
+            {bit.value}
+          </div>
+        ))}
       </div>
     </div>
   );

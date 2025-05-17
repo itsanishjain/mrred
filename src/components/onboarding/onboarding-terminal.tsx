@@ -21,7 +21,7 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
 
       // Simulate security level increasing
       const securityTimer = setInterval(() => {
-        setSecurityLevel(prev => prev < 100 ? prev + 1 : 100);
+        setSecurityLevel((prev) => (prev < 100 ? prev + 1 : 100));
       }, 50);
 
       return () => {
@@ -31,7 +31,7 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
     }, []);
 
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -39,9 +39,9 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
       >
         {/* Background grid effect */}
         <div className="absolute inset-0 bg-[url('/assets/grid-pattern.png')] opacity-5 z-0"></div>
-        
+
         {/* Terminal Header */}
-        <motion.div 
+        <motion.div
           initial={{ y: -50 }}
           animate={{ y: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
@@ -50,12 +50,12 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
           <div className="flex items-center space-x-3">
             <Terminal className="h-5 w-5 text-red-300" />
             <div className="text-white font-mono font-bold tracking-wider text-sm bg-gradient-to-r from-red-300 to-red-100 bg-clip-text text-transparent">
-              MR.RED IDENTITY VERIFICATION v2.0
+              MR.RED IDENTITdfadsY VERIFICATION v2.0
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <div className="text-xs text-red-300 font-mono">{time}</div>
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <motion.div 
                 whileHover={{ scale: 1.2 }}
                 className="w-3 h-3 rounded-full bg-yellow-500 shadow-glow-yellow"
@@ -68,26 +68,27 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
                 whileHover={{ scale: 1.2 }}
                 className="w-3 h-3 rounded-full bg-red-500 shadow-glow-red"
               ></motion.div>
-            </div>
+            </div> */}
           </div>
         </motion.div>
 
         {/* Terminal Body */}
-        <div className="flex-1 overflow-hidden bg-black/90 relative z-10" ref={ref}>
+        <div
+          className="flex-1 overflow-hidden bg-black/90 relative z-10"
+          ref={ref}
+        >
           {/* Scanline effect */}
           <div className="absolute inset-0 bg-scanline pointer-events-none"></div>
           {/* Vignette effect */}
           <div className="absolute inset-0 bg-radial-gradient pointer-events-none"></div>
           {/* Glitch effect overlay */}
           <div className="absolute inset-0 bg-glitch opacity-10 pointer-events-none"></div>
-          
-          <div className="relative z-20">
-            {children}
-          </div>
+
+          <div className="relative z-20">{children}</div>
         </div>
 
         {/* Terminal Footer */}
-        <motion.div 
+        <motion.div
           initial={{ y: 50 }}
           animate={{ y: 0 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 120 }}

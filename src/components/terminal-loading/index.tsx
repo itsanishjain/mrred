@@ -160,45 +160,25 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
         className="bg-gradient-to-r from-red-950 to-red-900 p-3 flex items-center justify-between border-b border-red-800 relative z-10 shadow-lg shadow-red-950/50"
       >
         <div className="flex items-center space-x-3">
-          <motion.div
-            animate={{
-              rotate: [0, 5, 0, -5, 0],
-              scale: [1, 1.05, 1, 1.05, 1]
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              repeatType: "reverse"
-            }}
-          >
-            <Terminal className="h-5 w-5 text-red-300 drop-shadow-[0_0_3px_rgba(239,68,68,0.5)]" />
-          </motion.div>
-          <motion.span 
-            className="text-red-100 font-mono text-lg tracking-wider bg-gradient-to-r from-red-300 to-red-100 bg-clip-text text-transparent"
-            animate={{
-              textShadow: ["0 0 5px rgba(239,68,68,0.3)", "0 0 10px rgba(239,68,68,0.5)", "0 0 5px rgba(239,68,68,0.3)"]
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
+          <Terminal className="h-5 w-5 text-red-300 drop-shadow-[0_0_3px_rgba(239,68,68,0.5)]" />
+          <span className="text-red-100 font-mono text-lg tracking-wider bg-gradient-to-r from-red-300 to-red-100 bg-clip-text text-transparent">
             MR.RED TERMINAL v3.0
-          </motion.span>
+          </span>
         </div>
         
         <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+            <div className="h-3 w-3 rounded-full bg-green-500"></div>
+            <div className="h-3 w-3 rounded-full bg-red-500"></div>
+          </div>
           <div className="hidden md:flex items-center text-red-300 text-xs">
             <span>{currentTime}</span>
           </div>
-          <motion.div 
-            className={`px-2 py-1 rounded text-xs font-bold flex items-center ${systemStatus === "ONLINE" ? "bg-red-500/20 text-red-400 shadow-glow-red" : "bg-red-900/30 text-red-500"}`}
-            animate={systemStatus !== "ONLINE" ? {
-              opacity: [1, 0.7, 1],
-              scale: [1, 1.02, 1]
-            } : {}}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
+          <div className={`px-2 py-1 rounded text-xs font-bold flex items-center ${systemStatus === "ONLINE" ? "bg-red-500/20 text-red-400" : "bg-red-900/30 text-red-500"}`}>
             {systemStatus === "ONLINE" ? <Check className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
             {systemStatus}
-          </motion.div>
+          </div>
         </div>
       </motion.div>
       
@@ -328,14 +308,7 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
               <Onboarding onboardUser={onboardUser} />
             </div>
           </div>
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
-            transition={{ delay: 1 }}
-            className="w-full mt-4 h-12 overflow-hidden"
-          >
-            <BinaryStream className="opacity-50" />
-          </motion.div>
+
         </motion.div>
 
         {/* Right Panel */}
@@ -363,13 +336,13 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
         </motion.div>
       </div>
       
+      {/* Binary Stream Footer */}
+      <div className="w-full overflow-hidden h-6 border-t border-red-900/20">
+        <BinaryStream className="opacity-70" length={200} density={5} height={1} />
+      </div>
+      
       {/* Terminal Footer */}
-      <motion.div 
-        initial={{ y: 50 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.5, type: "spring" }}
-        className="bg-gradient-to-r from-red-950 to-red-900 px-4 py-2 text-xs border-t border-red-800 relative z-10 shadow-lg flex justify-between items-center text-red-300"
-      >
+      <div className="bg-gradient-to-r from-red-950 to-red-900 px-4 py-2 text-xs border-t border-red-800 relative z-10 shadow-lg flex justify-between items-center text-red-300">
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
             <Lock className="h-3 w-3 mr-1" />
@@ -385,7 +358,7 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
           <span>SECURE CONNECTION</span>
           <span className="animate-pulse ml-1">█</span>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
