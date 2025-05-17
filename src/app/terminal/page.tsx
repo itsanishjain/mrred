@@ -456,13 +456,43 @@ const TerminalPage = () => {
     const checkAuthentication = async () => {
       setIsAuthChecking(true);
       try {
+        console.log('Checking authentication status...');
         const client = getPublicClient();
         const resumed = await client.resumeSession();
-        if (resumed.isOk()) {
-          // User is authenticated, show Terminal
-          setShowOnboarding(false);
+        console.log('Resume session result:', resumed.isOk() ? 'OK' : 'Failed');
+        
+        // Check if user has a wallet connected
+        if (walletClient?.account?.address) {
+          const address = walletClient.account.address;
+          console.log(`Wallet connected: ${address}`);
+          
+          // Check if user has a Lens profile in localStorage
+          const hasProfile = localStorage.getItem(`lens_profile_${address}`) === 'true';
+          console.log(`Has profile in localStorage: ${hasProfile}`);
+          
+          // Check URL parameters for direct navigation from onboarding
+          const urlParams = new URLSearchParams(window.location.search);
+          const fromOnboarding = urlParams.get('from') === 'onboarding';
+          console.log(`Navigated from onboarding: ${fromOnboarding}`);
+          
+          if (resumed.isOk() || hasProfile || fromOnboarding) {
+            // User is authenticated or has a profile, show Terminal
+            console.log('Authentication successful, showing Terminal');
+            setShowOnboarding(false);
+            
+            // If we don't have a profile record yet but came from onboarding, save it
+            if (fromOnboarding && !hasProfile && address) {
+              console.log('Saving profile status from onboarding redirect');
+              localStorage.setItem(`lens_profile_${address}`, 'true');
+            }
+          } else {
+            // User is not authenticated, show Onboarding
+            console.log('Authentication failed, showing Onboarding');
+            setShowOnboarding(true);
+          }
         } else {
-          // User is not authenticated, show Onboarding
+          // No wallet connected, show Onboarding
+          console.log('No wallet connected, showing Onboarding');
           setShowOnboarding(true);
         }
       } catch (error) {
@@ -481,34 +511,22 @@ const TerminalPage = () => {
 
   // Determine which component to render based on state
   const renderComponent = () => {
-    // return <LoadingScreen onboardUser={onboardUser} />;
-    // return <Onboarding onboardUser={onboardUser} />;
-    // if (isAuthChecking) {
-    //   return <LoadingScreen />;
-    // } else if (!showOnboarding) {
-    //   return <Onboarding onboardUser={onboardUser} />;
-    // } else {
-    //   return (
-    //     <Terminal
-    //       createTextPost={createTextPost}
-    //       createImagePost={createImagePost}
-    //       fetchUserPosts={fetchUserPosts}
-    //       fetchUserFeed={fetchUserFeed}
-    //       toggleReaction={toggleReaction}
-    //       fetchPostComments={fetchPostComments}
-    //     />
-    //   );
-    // }
-    return (
-      <Terminal
-        createTextPost={createTextPost}
-        createImagePost={createImagePost}
-        fetchUserPosts={fetchUserPosts}
-        fetchUserFeed={fetchUserFeed}
-        toggleReaction={toggleReaction}
-        fetchPostComments={fetchPostComments}
-      />
-    );
+    if (isAuthChecking) {
+      return <LoadingScreen onboardUser={onboardUser} />;
+    } else if (showOnboarding) {
+      return <Onboarding onboardUser={onboardUser} />;
+    } else {
+      return (
+        <Terminal
+          createTextPost={createTextPost}
+          createImagePost={createImagePost}
+          fetchUserPosts={fetchUserPosts}
+          fetchUserFeed={fetchUserFeed}
+          toggleReaction={toggleReaction}
+          fetchPostComments={fetchPostComments}
+        />
+      );
+    }
   };
 
   // Generate a unique location key based on the current state
@@ -520,9 +538,9 @@ const TerminalPage = () => {
 
   return (
     <div className="min-h-screen w-full overflow-hidden bg-black">
-      {/* <PageTransition location={locationKey}> */}
-      {renderComponent()}
-      {/* </PageTransition> */}
+      <PageTransition location={locationKey}>
+        {renderComponent()}
+      </PageTransition>
 
       {/* Debug buttons - can be removed in production */}
       {DEBUG_BUTTONS && (

@@ -41,7 +41,7 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
         <div className="absolute inset-0 bg-[url('/assets/grid-pattern.png')] opacity-5 z-0"></div>
 
         {/* Terminal Header */}
-        <motion.div
+        {/* <motion.div
           initial={{ y: -50 }}
           animate={{ y: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
@@ -55,22 +55,22 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
           </div>
           <div className="flex items-center space-x-3">
             <div className="text-xs text-red-300 font-mono">{time}</div>
-            {/* <div className="flex items-center space-x-2">
-              <motion.div 
+            <div className="flex items-center space-x-2">
+              <motion.div
                 whileHover={{ scale: 1.2 }}
                 className="w-3 h-3 rounded-full bg-yellow-500 shadow-glow-yellow"
               ></motion.div>
-              <motion.div 
+              <motion.div
                 whileHover={{ scale: 1.2 }}
                 className="w-3 h-3 rounded-full bg-green-500 shadow-glow-green"
               ></motion.div>
-              <motion.div 
+              <motion.div
                 whileHover={{ scale: 1.2 }}
                 className="w-3 h-3 rounded-full bg-red-500 shadow-glow-red"
               ></motion.div>
-            </div> */}
+            </div>
           </div>
-        </motion.div>
+        </motion.div> */}
 
         {/* Terminal Body */}
         <div
