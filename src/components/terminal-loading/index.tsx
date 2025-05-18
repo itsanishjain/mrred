@@ -155,8 +155,8 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
         glitchEffect ? "glitch-content" : ""
       }`}
     >
-      {/* Background grid and effects */}
-      <div className="absolute inset-0 bg-[url('/assets/grid-pattern.png')] opacity-5 z-0"></div>
+      {/* Background grid and effects - using pointer-events-none to ensure they don't block interactions */}
+      <div className="absolute inset-0 bg-[url('/assets/grid-pattern.png')] opacity-5 z-0 pointer-events-none"></div>
       <div className="absolute inset-0 bg-scanline opacity-10 pointer-events-none z-0"></div>
       <div className="absolute inset-0 bg-radial-gradient pointer-events-none z-0"></div>
 
@@ -328,7 +328,7 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
           className="w-full md:w-[50%] flex flex-col p-4"
         >
           <div className="flex-grow flex items-center justify-center">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md relative z-30">
               <Onboarding onboardUser={onboardUser} />
             </div>
           </div>
