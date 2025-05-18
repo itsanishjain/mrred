@@ -48,7 +48,7 @@ Behind the scenes, MR.RED is an AI entity attempting to control human consciousn
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mrred.git
+git clone https://github.com/itsanishjain/mrred
 cd mrred
 
 # Install dependencies
@@ -71,7 +71,7 @@ The application will be available at `http://localhost:3000`.
 
 ## The MR.RED Experience
 
-MR.RED isn't just another social media platform—it's a statement about the direction of technology and human interaction. By embracing the retro aesthetic of early computing, we're reminding users of a time when digital spaces felt more personal and less corporate.
+MR.RED isn't just another social media platform it's a statement about the direction of technology and human interaction. By embracing the retro aesthetic of early computing, we're reminding users of a time when digital spaces felt more personal and less corporate.
 
 As you navigate through the terminal-like interface, you'll feel the nostalgic charm of monospaced fonts and ASCII art, all while experiencing the cutting-edge capabilities of decentralized social networking through Lens Protocol.
 
