@@ -107,28 +107,34 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
         </svg>
 
         {/* Progress text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.span 
-            animate={{
-              textShadow: glowEffect ? ["0 0 3px rgba(239,68,68,0.5)", "0 0 5px rgba(239,68,68,0.7)", "0 0 3px rgba(239,68,68,0.5)"] : ["none"]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className={`text-red-500 font-mono text-sm font-bold ${glitchEffect ? "glitch-text" : ""}`}
-          >
-            {Math.round(progress)}%
-          </motion.span>
-          {label && (
-            <span className="text-red-400/80 font-mono text-xs mt-1">
-              {label}
-            </span>
-          )}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <div className="flex flex-col items-center justify-center bg-black/70 rounded-full w-[70%] h-[70%] border border-red-900/30">
+            <motion.span 
+              animate={{
+                textShadow: glowEffect ? ["0 0 3px rgba(239,68,68,0.5)", "0 0 5px rgba(239,68,68,0.7)", "0 0 3px rgba(239,68,68,0.5)"] : ["none"]
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className={`text-red-500 font-mono text-xl font-bold ${glitchEffect ? "glitch-text" : ""}`}
+            >
+              {Math.round(progress)}%
+            </motion.span>
+            {label && (
+              <div className="text-red-400/80 font-mono text-[0.65rem] mt-1 px-2 text-center leading-tight uppercase tracking-wider">
+                {label}
+              </div>
+            )}
+          </div>
         </div>
       </motion.div>
 
       {/* Decorative elements */}
       {glowEffect && (
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-red-500/5 rounded-full blur-md transform scale-110 animate-pulse"></div>
+          <div className="absolute inset-0 bg-red-500/10 rounded-full blur-md transform scale-110 animate-pulse"></div>
+          <div className="absolute inset-0 bg-red-500/5 rounded-full blur-lg transform scale-125"></div>
+          {progress >= 100 && (
+            <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl transform scale-105 animate-pulse"></div>
+          )}
         </div>
       )}
     </div>
