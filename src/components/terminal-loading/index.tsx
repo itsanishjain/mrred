@@ -268,7 +268,7 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
                 <div className="flex flex-col items-center">
                   <ProgressCircle
                     progress={progress}
-                    size={120}
+                    size={200}
                     glowEffect={true}
                     label="SYSTEM INITIALIZATION"
                     className="mb-3"

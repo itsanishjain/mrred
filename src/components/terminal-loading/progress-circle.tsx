@@ -13,8 +13,8 @@ interface ProgressCircleProps {
 
 export const ProgressCircle: React.FC<ProgressCircleProps> = ({
   progress,
-  size = 100,
-  strokeWidth = 8,
+  size = 400,
+  strokeWidth = 10,
   className = "",
   glowEffect = true,
   pulseEffect = true,
@@ -34,7 +34,7 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
           setTimeout(() => setGlitchEffect(false), 150);
         }
       }, 2000);
-      
+
       return () => clearInterval(glitchInterval);
     }
   }, [progress]);
@@ -42,14 +42,18 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
   return (
     <div className={`relative ${className}`}>
       <motion.div
-        animate={pulseEffect ? {
-          scale: [1, 1.02, 1],
-          opacity: [1, 0.9, 1]
-        } : {}}
+        animate={
+          pulseEffect
+            ? {
+                scale: [1, 1.02, 1],
+                opacity: [1, 0.9, 1],
+              }
+            : {}
+        }
         transition={{
           duration: 2,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
         className="relative"
       >
@@ -86,7 +90,9 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className={`${glowEffect ? "drop-shadow-[0_0_3px_rgba(239,68,68,0.7)]" : ""} ${glitchEffect ? "glitch-element" : ""}`}
+            className={`${
+              glowEffect ? "drop-shadow-[0_0_3px_rgba(239,68,68,0.7)]" : ""
+            } ${glitchEffect ? "glitch-element" : ""}`}
             stroke="url(#progressGradient)"
             strokeWidth={strokeWidth - 2}
             strokeDasharray={circumference}
@@ -99,7 +105,13 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
 
           {/* Define gradient for progress */}
           <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient
+              id="progressGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
               <stop offset="0%" stopColor="#991b1b" />
               <stop offset="100%" stopColor="#ef4444" />
             </linearGradient>
@@ -109,12 +121,20 @@ export const ProgressCircle: React.FC<ProgressCircleProps> = ({
         {/* Progress text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <div className="flex flex-col items-center justify-center bg-black/70 rounded-full w-[70%] h-[70%] border border-red-900/30">
-            <motion.span 
+            <motion.span
               animate={{
-                textShadow: glowEffect ? ["0 0 3px rgba(239,68,68,0.5)", "0 0 5px rgba(239,68,68,0.7)", "0 0 3px rgba(239,68,68,0.5)"] : ["none"]
+                textShadow: glowEffect
+                  ? [
+                      "0 0 3px rgba(239,68,68,0.5)",
+                      "0 0 5px rgba(239,68,68,0.7)",
+                      "0 0 3px rgba(239,68,68,0.5)",
+                    ]
+                  : ["none"],
               }}
               transition={{ duration: 2, repeat: Infinity }}
-              className={`text-red-500 font-mono text-xl font-bold ${glitchEffect ? "glitch-text" : ""}`}
+              className={`text-red-500 font-mono text-xl font-bold ${
+                glitchEffect ? "glitch-text" : ""
+              }`}
             >
               {Math.round(progress)}%
             </motion.span>
