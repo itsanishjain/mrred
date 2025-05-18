@@ -283,8 +283,19 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
                         </div>
                         <div>{Math.floor(Math.random() * 20 + 30)}%</div>
                       </div>
-                      <div className="w-full h-1.5 bg-red-950/50 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-red-700 to-red-500 w-[35%]"></div>
+                      <div className="w-full h-2.5 bg-black border border-red-900/50 rounded-sm overflow-hidden relative">
+                        <div className="h-full bg-gradient-to-r from-red-800 to-red-500 absolute left-0 top-0" style={{ width: '45%' }}></div>
+                        <div className="absolute inset-0 flex items-center justify-start px-1">
+                          <div className="flex w-full">
+                            {Array.from({ length: 20 }).map((_, i) => (
+                              <span 
+                                key={i} 
+                                className={`inline-block h-1 mx-px ${i < 9 ? 'bg-red-500/80' : 'bg-red-900/30'}`}
+                                style={{ width: `${100 / 20}%` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -296,8 +307,19 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
                         </div>
                         <div>{Math.floor(Math.random() * 30 + 40)}%</div>
                       </div>
-                      <div className="w-full h-1.5 bg-red-950/50 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-red-700 to-red-500 w-[65%]"></div>
+                      <div className="w-full h-2.5 bg-black border border-red-900/50 rounded-sm overflow-hidden relative">
+                        <div className="h-full bg-gradient-to-r from-red-800 to-red-500 absolute left-0 top-0" style={{ width: '47%' }}></div>
+                        <div className="absolute inset-0 flex items-center justify-start px-1">
+                          <div className="flex w-full">
+                            {Array.from({ length: 20 }).map((_, i) => (
+                              <span 
+                                key={i} 
+                                className={`inline-block h-1 mx-px ${i < 9 ? 'bg-red-500/80' : 'bg-red-900/30'}`}
+                                style={{ width: `${100 / 20}%` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -309,8 +331,19 @@ export const LoadingScreen: React.FC<{ onboardUser: () => Promise<void> }> = ({
                         </div>
                         <div>{Math.floor(Math.random() * 30 + 70)}%</div>
                       </div>
-                      <div className="w-full h-1.5 bg-red-950/50 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-red-700 to-red-500 w-[85%]"></div>
+                      <div className="w-full h-2.5 bg-black border border-red-900/50 rounded-sm overflow-hidden relative">
+                        <div className="h-full bg-gradient-to-r from-red-800 to-red-500 absolute left-0 top-0" style={{ width: '84%' }}></div>
+                        <div className="absolute inset-0 flex items-center justify-start px-1">
+                          <div className="flex w-full">
+                            {Array.from({ length: 20 }).map((_, i) => (
+                              <span 
+                                key={i} 
+                                className={`inline-block h-1 mx-px ${i < 17 ? 'bg-red-500/80' : 'bg-red-900/30'}`}
+                                style={{ width: `${100 / 20}%` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
