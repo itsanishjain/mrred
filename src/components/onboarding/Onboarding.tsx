@@ -5,6 +5,8 @@ import { Howl } from "howler";
 import { useAccount } from "wagmi";
 import { ConnectKitButton } from "connectkit";
 import { getPublicClient } from "@/lib/lens/client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   AlertTriangle,
   Shield,
@@ -22,6 +24,7 @@ interface OnboardingProps {
 
 export default function Onboarding({ onboardUser }: OnboardingProps) {
   // State management
+  const router = useRouter();
   const [bootSequenceComplete, setBootSequenceComplete] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasLensProfile, setHasLensProfile] = useState(false);
@@ -33,6 +36,7 @@ export default function Onboarding({ onboardUser }: OnboardingProps) {
   const [bootLines, setBootLines] = useState<string[]>([]);
   const [walletInitialized, setWalletInitialized] = useState(false);
   const [walletCheckStarted, setWalletCheckStarted] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Refs
   const terminalBodyRef = useRef<HTMLDivElement>(null);
@@ -486,13 +490,27 @@ export default function Onboarding({ onboardUser }: OnboardingProps) {
                 </div>
               </div>
             </div>
-
-            <a
-              href="/"
-              className="block w-full py-3 bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 text-white font-bold border border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-center shadow-lg shadow-green-900/30"
+            
+            <button
+              onClick={() => {
+                // Play sound effect
+                typewriterSound.play("type");
+                
+                // Store profile status in localStorage
+                if (address) {
+                  localStorage.setItem(`lens_profile_${address}`, 'true');
+                }
+                
+                // Directly navigate to terminal page with skip parameter
+                window.location.href = "/terminal?skip=true";
+              }}
+              className="w-full py-3 bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 text-white font-bold border border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-center shadow-lg shadow-green-900/30"
             >
-              PROCEED TO TERMINAL
-            </a>
+              <span className="flex items-center justify-center">
+                <Terminal className="mr-2 h-4 w-4" />
+                PROCEED TO TERMINAL
+              </span>
+            </button>
 
             <div className="text-yellow-500 text-sm mt-4 border border-yellow-500/50 p-3 bg-yellow-500/10 rounded flex items-start">
               <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
