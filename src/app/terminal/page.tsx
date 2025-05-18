@@ -37,6 +37,7 @@ import { getLensClient, getPublicClient } from "@/lib/lens/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import { never } from "@lens-protocol/client";
 import { chains } from "@lens-chain/sdk/viem";
+import { LoadingScreen } from "@/components/terminal-loading";
 
 const DEBUG_BUTTONS = false;
 const DELAY = 10000;
@@ -48,7 +49,12 @@ export default function TerminalPage() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
 
-  const { data: walletClient } = useWalletClient();
+  const {
+    data: walletClient,
+    isLoading: walletLoading,
+    isFetched,
+    isFetching,
+  } = useWalletClient();
 
   const storageClient = StorageClient.create();
   // TODO: Replace with your own metadata
@@ -448,17 +454,20 @@ export default function TerminalPage() {
     }
   };
 
-  // Just render the Terminal component directly
   return (
     <div className="min-h-screen w-full overflow-hidden bg-black">
-      <Terminal
-        createTextPost={createTextPost}
-        createImagePost={createImagePost}
-        fetchUserPosts={fetchUserPosts}
-        fetchUserFeed={fetchUserFeed}
-        toggleReaction={toggleReaction}
-        fetchPostComments={fetchPostComments}
-      />
+      {isFetching ? (
+        <LoadingScreen onboardUser={onboardUser} />
+      ) : (
+        <Terminal
+          createTextPost={createTextPost}
+          createImagePost={createImagePost}
+          fetchUserPosts={fetchUserPosts}
+          fetchUserFeed={fetchUserFeed}
+          toggleReaction={toggleReaction}
+          fetchPostComments={fetchPostComments}
+        />
+      )}
     </div>
   );
 }
