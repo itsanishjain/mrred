@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  mainnet,
-  testnet,
-  PageSize,
-  postId,
-  PostReferenceType,
-} from "@lens-protocol/client";
+import { postId, PostReferenceType } from "@lens-protocol/client";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { uri, evmAddress } from "@lens-protocol/client";
 import {
