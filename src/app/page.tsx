@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  mainnet,
-  testnet,
-  PageSize,
-  postId,
-  PostReferenceType,
-} from "@lens-protocol/client";
+import { postId, PostReferenceType } from "@lens-protocol/client";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { uri, evmAddress } from "@lens-protocol/client";
 import {
@@ -42,7 +36,7 @@ import { LoadingScreen } from "@/components/terminal-loading";
 import { PageTransition } from "@/components/transitions/PageTransition";
 
 const DEBUG_BUTTONS = true;
-const DELAY = 30000;
+const DELAY = 0;
 
 const App = () => {
   // State to track whether to show onboarding or terminal
@@ -459,9 +453,11 @@ const App = () => {
         const client = getPublicClient();
         const resumed = await client.resumeSession();
         if (resumed.isOk()) {
+          console.log("User is authenticated");
           // User is authenticated, show Terminal
           setShowOnboarding(false);
         } else {
+          console.log("User is not authenticated");
           // User is not authenticated, show Onboarding
           setShowOnboarding(true);
         }
@@ -481,29 +477,32 @@ const App = () => {
 
   // Determine which component to render based on state
   const renderComponent = () => {
-    // if (isAuthChecking) {
-    //   return <LoadingScreen />;
-    // } else if (!showOnboarding) {
-    //   return <Onboarding onboardUser={onboardUser} />;
-    // } else {
-    //   return (
-    //     <Terminal
-    //       createTextPost={createTextPost}
-    //       fetchUserPosts={fetchUserPosts}
-    //       fetchUserPostsForYou={ }
-    //     />f
-    //   );
-    // }
-    return (
-      <Terminal
-        createTextPost={createTextPost}
-        createImagePost={createImagePost}
-        fetchUserPosts={fetchUserPosts}
-        fetchUserFeed={fetchUserFeed}
-        toggleReaction={toggleReaction}
-        fetchPostComments={fetchPostComments}
-      />
-    );
+    if (isAuthChecking) {
+      return <LoadingScreen />;
+    } else if (showOnboarding) {
+      return <Onboarding onboardUser={onboardUser} />;
+    } else {
+      return (
+        <Terminal
+          createTextPost={createTextPost}
+          createImagePost={createImagePost}
+          fetchUserPosts={fetchUserPosts}
+          fetchUserFeed={fetchUserFeed}
+          toggleReaction={toggleReaction}
+          fetchPostComments={fetchPostComments}
+        />
+      );
+    }
+    // return (
+    //   <Terminal
+    //     createTextPost={createTextPost}
+    //     createImagePost={createImagePost}
+    //     fetchUserPosts={fetchUserPosts}
+    //     fetchUserFeed={fetchUserFeed}
+    //     toggleReaction={toggleReaction}
+    //     fetchPostComments={fetchPostComments}
+    //   />
+    // );
   };
 
   // Generate a unique location key based on the current state
