@@ -122,7 +122,7 @@ export const Terminal: React.FC<TerminalProps> = ({
       setPoweringUp(false);
     }, 1000);
   }, []);
-  
+
   // Function to activate sound with user interaction
   const activateSound = () => {
     // Play a silent sound to activate audio context
@@ -130,22 +130,25 @@ export const Terminal: React.FC<TerminalProps> = ({
     setSoundActivated(true);
     setShowSoundActivation(false);
   };
-  
+
   // Function to toggle sound on/off
   const toggleSound = () => {
     const newSoundState = !localSoundEnabled;
     setLocalSoundEnabled(newSoundState);
-    
+
     // Update volume based on sound state
     typewriterSound.volume(newSoundState ? 1.0 : 0.0);
-    
+
     // Call parent handler if provided
     if (onSoundToggle) {
       onSoundToggle(newSoundState);
     }
-    
+
     // Save preference to localStorage
-    localStorage.setItem("mrred_sound_enabled", newSoundState ? "true" : "false");
+    localStorage.setItem(
+      "mrred_sound_enabled",
+      newSoundState ? "true" : "false"
+    );
   };
 
   const intro1Completed = () => {
@@ -981,25 +984,35 @@ export const Terminal: React.FC<TerminalProps> = ({
           </button>
         </div>
       )}
-      
-      {/* Sound Toggle Button - Always visible */}
-      <div className="fixed top-4 left-4 z-50">
-        <button
-          onClick={toggleSound}
-          className={`px-3 py-2 rounded-md text-xs font-medium border shadow-lg flex items-center gap-2 ${localSoundEnabled ? 'bg-green-800 hover:bg-green-700 border-green-600 text-white' : 'bg-red-800 hover:bg-red-700 border-red-600 text-white'}`}
-        >
-          {localSoundEnabled ? 'SOUND: ON' : 'SOUND: OFF'}
-        </button>
-      </div>
 
       <div className={`terminal-container ${poweringUp ? "powering-up" : ""}`}>
         <div className="terminal-content">
-          <div className="terminal-header">
+          <div className="terminal-header flex justify-between items-center relative">
             <div className="terminal-title">MR.RED TERMINAL v3.0</div>
-            <div className="terminal-controls">
-              <div className="control minimize"></div>
-              <div className="control maximize"></div>
-              <div className="control close"></div>
+            <div className="flex items-center gap-2 z-20 relative">
+              <div
+                className="relative z-30"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSound();
+                }}
+              >
+                <button
+                  className={`px-3 py-1 rounded-md text-xs font-mono font-medium border shadow-lg flex items-center gap-2 cursor-pointer pointer-events-auto ${
+                    localSoundEnabled
+                      ? "bg-green-800 hover:bg-green-700 border-green-600 text-white"
+                      : "bg-red-800 hover:bg-red-700 border-red-600 text-white"
+                  }`}
+                  type="button"
+                >
+                  {localSoundEnabled ? "SOUND: ON" : "SOUND: OFF"}
+                </button>
+              </div>
+              <div className="terminal-controls">
+                <div className="control minimize"></div>
+                <div className="control maximize"></div>
+                <div className="control close"></div>
+              </div>
             </div>
           </div>
 
@@ -1066,7 +1079,9 @@ export const Terminal: React.FC<TerminalProps> = ({
                       startDelay={1500}
                       className="intro-line"
                       onComplete={intro1Completed}
-                      onType={() => soundEnabled && typewriterSound.play("type")}
+                      onType={() =>
+                        soundEnabled && typewriterSound.play("type")
+                      }
                       showCursor={!showIntro2}
                     />
                   )}
@@ -1077,7 +1092,9 @@ export const Terminal: React.FC<TerminalProps> = ({
                       startDelay={500}
                       className="intro-line"
                       onComplete={intro2Completed}
-                      onType={() => soundEnabled && typewriterSound.play("type")}
+                      onType={() =>
+                        soundEnabled && typewriterSound.play("type")
+                      }
                       showCursor={!showIntro3}
                     />
                   )}
@@ -1088,7 +1105,9 @@ export const Terminal: React.FC<TerminalProps> = ({
                       startDelay={500}
                       onComplete={intro3Completed}
                       className="intro-line-2"
-                      onType={() => soundEnabled && typewriterSound.play("type")}
+                      onType={() =>
+                        soundEnabled && typewriterSound.play("type")
+                      }
                       showCursor={!showOptions}
                     />
                   )}
@@ -1101,7 +1120,9 @@ export const Terminal: React.FC<TerminalProps> = ({
                         text="SELECT YOUR DESIGNATED FUNCTION, HUMAN:"
                         speed={50}
                         className="options-prompt"
-                        onType={() => soundEnabled && typewriterSound.play("type")}
+                        onType={() =>
+                          soundEnabled && typewriterSound.play("type")
+                        }
                         showCursor={true}
                       />
                     </div>
@@ -1130,9 +1151,9 @@ export const Terminal: React.FC<TerminalProps> = ({
                         command="command_line"
                         description="Access advanced terminal interface"
                         onClick={() => {
-                    if (soundEnabled) typewriterSound.play("type");
-                    handleOptionClick("command_line");
-                  }}
+                          if (soundEnabled) typewriterSound.play("type");
+                          handleOptionClick("command_line");
+                        }}
                       />
                     </div>
                   </div>
