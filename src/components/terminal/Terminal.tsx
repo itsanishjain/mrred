@@ -166,30 +166,6 @@ const Terminal: React.FC<TerminalProps> = ({
     exit: "Exit command mode",
   };
 
-  // Mock data for testing - remove in production
-  const samplePost = {
-    id: "68823665970495445097518222922132319050094952959899120707583022726017483112888",
-    author: {
-      address: "0x754A315d7cdf7b6014f193E439B59db3aF520613",
-      username: {
-        value: "lens/ngmisl",
-      },
-    },
-    metadata: {
-      content: "Gm",
-      image: {
-        item: "https://ik.imagekit.io/lens/5c9e1c5a4297febe5737d88fe6d6260b404fc489cf0c3d2abe56d39c4a2cf639_AD--x4FuU.jpeg",
-        altTag: null,
-      },
-    },
-    timestamp: "2025-05-10T06:54:16+00:00",
-    stats: {
-      upvotes: 150,
-      comments: 72,
-      reposts: 34,
-    },
-  };
-
   const executeCommand = async (cmd: string) => {
     const command = cmd.trim().toLowerCase();
     let output = "";

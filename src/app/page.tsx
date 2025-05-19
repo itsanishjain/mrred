@@ -17,10 +17,8 @@ import {
   post,
   fetchPosts,
   fetchPostsForYou,
-  bookmarkPost,
   addReaction,
   undoReaction,
-  fetchPost,
   fetchPostReferences,
 } from "@lens-protocol/client/actions";
 import { useWalletClient } from "wagmi";
@@ -35,8 +33,8 @@ import { Button } from "@/components/ui/button";
 import { LoadingScreen } from "@/components/terminal-loading";
 import { PageTransition } from "@/components/transitions/PageTransition";
 
-const DEBUG_BUTTONS = true;
-const DELAY = 0;
+const DEBUG_BUTTONS = false;
+const DELAY = 5000;
 
 const App = () => {
   // State to track whether to show onboarding or terminal
@@ -50,22 +48,8 @@ const App = () => {
   const storageClient = StorageClient.create();
   // TODO: Replace with your own metadata
   const metadata = account({
-    name: "Jane Doe",
-    bio: "I am a photographer based in New York City.",
-    picture: "lens://4f91cab87ab5e4f5066f878b72…",
-    coverPicture: "lens://4f91cab87ab5e4f5066f8…",
-    attributes: [
-      {
-        key: "twitter",
-        type: MetadataAttributeType.STRING,
-        value: "https://twitter.com/janedoexyz",
-      },
-      {
-        key: "dob",
-        type: MetadataAttributeType.DATE,
-        value: "1990-01-01T00:00:00Z",
-      },
-    ],
+    name: "MrRed",
+    bio: "MR.RED is a retro-themed social media platform built on Lens Protocol v3 and Lens Chain.",
   });
 
   const onboardUser = async () => {
