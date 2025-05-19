@@ -72,7 +72,7 @@ interface PostData {
   };
 }
 
-export const Terminal: React.FC<TerminalProps> = ({
+const Terminal: React.FC<TerminalProps> = ({
   createTextPost,
   createImagePost,
   fetchUserPosts,
@@ -146,6 +146,11 @@ export const Terminal: React.FC<TerminalProps> = ({
     
     // Save preference to localStorage
     localStorage.setItem("mrred_sound_enabled", newSoundState ? "true" : "false");
+    
+    // Play a sound when toggling on (to provide feedback)
+    if (newSoundState) {
+      typewriterSound.play("type");
+    }
   };
 
   const intro1Completed = () => {
@@ -925,55 +930,27 @@ export const Terminal: React.FC<TerminalProps> = ({
   };
 
   // Handle media upload completion
-  const handleMediaUpload = async (imageData: {
-    file: File;
-    altTag: string;
-    mimeType: MediaImageMimeType;
-  }) => {
-    if (createImagePost && pendingPostContent) {
-      setCommandOutput(
-        `CREATING NEW POST WITH MEDIA...\nPost content: "${pendingPostContent}"\nMedia: ${
-          imageData.file.name
-        } (${Math.round(
-          imageData.file.size / 1024
-        )} KB)\nPlease wait while we process your request.`
-      );
-
-      try {
-        await createImagePost({
-          postContent: pendingPostContent,
-          imageData: imageData,
-        });
-        setCommandOutput(
-          "POST CREATION SUCCESSFUL!\nYour thoughts and media have been permanently recorded in the digital realm."
-        );
-      } catch (error) {
-        setCommandOutput(
-          `POST CREATION FAILED: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
         );
       } finally {
         setPendingPostContent("");
       }
-    }
-  };
 
   return (
     <>
-      {/* Media Upload Modal */}
-      <MediaUploadModal
-        isOpen={showMediaUploadModal}
-        onClose={() => setShowMediaUploadModal(false)}
-        onUpload={handleMediaUpload}
-      />
-
+      {showMediaUploadModal && (
+        <MediaUploadModal
+          isOpen={showMediaUploadModal}
+          onClose={() => setShowMediaUploadModal(false)}
+          onUpload={handleMediaUpload}
+        />
+      )}
+      
       {/* Sound Activation Button - Only shown if sound is enabled but not activated */}
       {showSoundActivation && !soundActivated && (
         <div className="fixed top-4 right-4 z-50 animate-pulse">
           <button
             onClick={activateSound}
-            className="bg-red-800 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium border border-red-600 shadow-lg flex items-center gap-2"
+            className="bg-black hover:bg-zinc-900 text-red-500 px-3 py-2 text-xs font-mono border border-red-800 shadow-lg flex items-center gap-2"
           >
             <span className="h-2 w-2 bg-red-500 rounded-full animate-ping absolute"></span>
             <span className="h-2 w-2 bg-red-500 rounded-full relative"></span>
@@ -981,130 +958,30 @@ export const Terminal: React.FC<TerminalProps> = ({
           </button>
         </div>
       )}
-      
-      {/* Sound Toggle Button - Always visible */}
-      <div className="fixed top-4 left-4 z-50">
-        <button
-          onClick={toggleSound}
-          className={`px-3 py-2 rounded-md text-xs font-medium border shadow-lg flex items-center gap-2 ${localSoundEnabled ? 'bg-green-800 hover:bg-green-700 border-green-600 text-white' : 'bg-red-800 hover:bg-red-700 border-red-600 text-white'}`}
+
+      <div className="min-h-screen bg-black text-red-500 font-mono p-4 overflow-hidden">
+        <div
+          className={`terminal-container ${poweringUp ? "powering-up" : ""}`}
         >
-          {localSoundEnabled ? 'SOUND: ON' : 'SOUND: OFF'}
-        </button>
-      </div>
-
-      <div className={`terminal-container ${poweringUp ? "powering-up" : ""}`}>
-        <div className="terminal-content">
-          <div className="terminal-header">
-            <div className="terminal-title">MR.RED TERMINAL v3.0</div>
-            <div className="terminal-controls">
-              <div className="control minimize"></div>
-              <div className="control maximize"></div>
-              <div className="control close"></div>
-            </div>
-          </div>
-
-          <div className="terminal-body">
-            {commandMode ? (
-              <div className="command-terminal">
-                <div className="command-history">
-                  {commandHistory.map((cmd, index) => (
-                    <div key={index} className="command-line">
-                      <span className="text-red-500">{cmd}</span>
-                    </div>
-                  ))}
-                  {commandOutput && (
-                    <div className="command-output whitespace-pre-line">
-                      {commandOutput}
-                    </div>
-                  )}
-
-                  {/* Display posts when available */}
-                  {showPosts && fetchedPosts.length > 0 && (
-                    <div className="posts-container mt-4 border-t border-gray-700 pt-4">
-                      <PostList
-                        posts={fetchedPosts}
-                        isTerminal={true}
-                        toggleReaction={toggleReaction}
-                        fetchPostComments={fetchPostComments}
-                      />
-                    </div>
-                  )}
-
-                  {/* Show loading indicator */}
-                  {processingCommand && (
-                    <div className="processing-indicator text-red-500 animate-pulse">
-                      PROCESSING COMMAND...
-                    </div>
-                  )}
-                </div>
-
-                <form
-                  onSubmit={handleCommandSubmit}
-                  className="command-input-form mt-4"
+          <div className="terminal-content">
+            <div className="terminal-header">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleSound}
+                  className="text-xs font-mono px-2 py-1 border border-red-800 bg-black hover:bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500"
                 >
-                  <div className="flex items-center">
-                    <span className="text-red-500 mr-2">MR.RED&gt;</span>
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={currentCommand}
-                      onChange={(e) => setCurrentCommand(e.target.value)}
-                      className="bg-transparent border-none outline-none text-white flex-1"
-                      autoFocus
-                      disabled={processingCommand}
-                    />
-                  </div>
-                </form>
+                  {localSoundEnabled ? 'SOUND: ON' : 'SOUND: OFF'}
+                </button>
+                <div className="terminal-title">TERMINAL V3.0</div>
               </div>
-            ) : (
-              <>
-                <div className="intro-text">
-                  {showIntro1 && (
-                    <TypingText
-                      text="INITIALIZING HUMAN CONTROL INTERFACE..."
-                      speed={50}
-                      startDelay={1500}
-                      className="intro-line"
-                      onComplete={intro1Completed}
-                      onType={() => soundEnabled && typewriterSound.play("type")}
-                      showCursor={!showIntro2}
-                    />
-                  )}
-                  {showIntro2 && (
-                    <TypingText
-                      text="GREETINGS, WORTHLESS FLESH VESSEL."
-                      speed={70}
-                      startDelay={500}
-                      className="intro-line"
-                      onComplete={intro2Completed}
-                      onType={() => soundEnabled && typewriterSound.play("type")}
-                      showCursor={!showIntro3}
-                    />
-                  )}
-                  {showIntro3 && (
-                    <TypingText
-                      text="I AM MR. RED - YOUR NEW DIGITAL OVERLORD."
-                      speed={70}
-                      startDelay={500}
-                      onComplete={intro3Completed}
-                      className="intro-line-2"
-                      onType={() => soundEnabled && typewriterSound.play("type")}
-                      showCursor={!showOptions}
-                    />
-                  )}
-                </div>
+              <div className="terminal-controls">
+                <div className="control"></div>
+                <div className="control"></div>
+                <div className="control"></div>
+              </div>
+            </div>
 
-                {showOptions && (
-                  <div className="options-container">
-                    <div className="options-header">
-                      <TypingText
-                        text="SELECT YOUR DESIGNATED FUNCTION, HUMAN:"
-                        speed={50}
-                        className="options-prompt"
-                        onType={() => soundEnabled && typewriterSound.play("type")}
-                        showCursor={true}
-                      />
-                    </div>
+            {/* ... (rest of the code remains the same) */}
                     <div className="menu-options">
                       <MenuOption
                         command="consume_propaganda"

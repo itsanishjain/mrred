@@ -22,7 +22,7 @@ import {
   fetchPostReferences,
 } from "@lens-protocol/client/actions";
 import { useWalletClient } from "wagmi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getLensClient, getPublicClient } from "@/lib/lens/client";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import { never } from "@lens-protocol/client";
@@ -34,13 +34,17 @@ import { LoadingScreen } from "@/components/terminal-loading";
 import { PageTransition } from "@/components/transitions/PageTransition";
 
 const DEBUG_BUTTONS = false;
-const DELAY = 5000;
+const DELAY = 0;
 
 const App = () => {
   // State to track whether to show onboarding or terminal
   const [showOnboarding, setShowOnboarding] = useState(true);
   // State to track loading state during authentication check
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  // State to track sound preference
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  // State to track if user has made a sound choice
+  const [soundChoiceMade, setSoundChoiceMade] = useState(false);
   const APP_ADDRESS = "0xE4074286Ff314712FC2094A48fD6d7F0757663aD";
 
   const { data: walletClient } = useWalletClient();
@@ -438,7 +442,16 @@ const App = () => {
         const resumed = await client.resumeSession();
         if (resumed.isOk()) {
           console.log("User is authenticated");
-          // User is authenticated, show Terminal
+          // User is authenticated, but we need to check if they've made a sound choice
+          const savedSoundPreference = localStorage.getItem("mrred_sound_enabled");
+          if (savedSoundPreference !== null) {
+            setSoundEnabled(savedSoundPreference === "true");
+            setSoundChoiceMade(true);
+          } else {
+            // If no sound preference is saved, we'll need to show the sound choice screen
+            setSoundChoiceMade(false);
+          }
+          // Set to show terminal instead of onboarding
           setShowOnboarding(false);
         } else {
           console.log("User is not authenticated");
@@ -449,7 +462,7 @@ const App = () => {
         console.error("Error checking authentication:", error);
         setShowOnboarding(true);
       } finally {
-        // Add a longer delay to showcase the loading animation
+        // Add a delay to showcase the loading animation
         setTimeout(() => {
           setIsAuthChecking(false);
         }, DELAY);
@@ -459,13 +472,76 @@ const App = () => {
     checkAuthentication();
   }, []);
 
+  // Handle sound preference change
+  const handleSoundToggle = useCallback((enabled: boolean) => {
+    setSoundEnabled(enabled);
+    setSoundChoiceMade(true);
+    // Store sound preference in localStorage
+    localStorage.setItem("mrred_sound_enabled", enabled ? "true" : "false");
+  }, []);
+
+  // We'll handle sound preference loading in the authentication check instead
+  // This ensures we have a consistent flow for both initial load and refreshes
+
   // Determine which component to render based on state
   const renderComponent = () => {
     if (isAuthChecking) {
-      return <LoadingScreen />;
+      // If we're checking auth, show loading screen with sound option if not already chosen
+      return (
+        <LoadingScreen
+          soundEnabled={soundEnabled}
+          onSoundToggle={handleSoundToggle}
+          showSoundOption={!soundChoiceMade}
+        />
+      );
     } else if (showOnboarding) {
-      return <Onboarding onboardUser={onboardUser} />;
+      // Show onboarding with sound toggle capability
+      return (
+        <Onboarding
+          onboardUser={onboardUser}
+          setSoundEnabled={handleSoundToggle}
+        />
+      );
     } else {
+      // If authenticated and sound choice not made, show a sound choice screen
+      if (!soundChoiceMade) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
+            <div className="max-w-md w-full bg-zinc-900 p-6 rounded-md border border-red-800">
+              <h2 className="text-xl font-bold mb-4 text-red-500">
+                AUDIO SETTINGS
+              </h2>
+              <p className="mb-4">
+                Choose your audio preference before entering the terminal:
+              </p>
+
+              <div className="flex gap-4 mb-6">
+                <button
+                  onClick={() => handleSoundToggle(true)}
+                  className="flex-1 py-2 bg-green-800 hover:bg-green-700 text-white font-bold border border-green-600 rounded"
+                >
+                  ENABLE AUDIO
+                </button>
+                <button
+                  onClick={() => handleSoundToggle(false)}
+                  className="flex-1 py-2 bg-red-800 hover:bg-red-700 text-white font-bold border border-red-600 rounded"
+                >
+                  DISABLE AUDIO
+                </button>
+              </div>
+
+              <button
+                onClick={() => setSoundChoiceMade(true)}
+                className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold border border-zinc-600 rounded"
+              >
+                PROCEED TO TERMINAL
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // If sound choice is made, show the terminal
       return (
         <Terminal
           createTextPost={createTextPost}
@@ -474,6 +550,8 @@ const App = () => {
           fetchUserFeed={fetchUserFeed}
           toggleReaction={toggleReaction}
           fetchPostComments={fetchPostComments}
+          soundEnabled={soundEnabled}
+          onSoundToggle={handleSoundToggle}
         />
       );
     }

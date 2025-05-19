@@ -6,6 +6,9 @@ import { useAccount } from "wagmi";
 import { ConnectKitButton } from "connectkit";
 import { getPublicClient } from "@/lib/lens/client";
 import { OnboardingTerminal } from "./onboarding-terminal";
+import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
+import { VolumeX, Volume2 } from "lucide-react";
 
 export default function OnboardingPage({ onboardUser }: OnboardingProps) {
   return (
@@ -17,9 +20,10 @@ export default function OnboardingPage({ onboardUser }: OnboardingProps) {
 
 interface OnboardingProps {
   onboardUser: () => Promise<void>;
+  setSoundEnabled?: (enabled: boolean) => void;
 }
 
-function Onboarding({ onboardUser }: OnboardingProps) {
+function Onboarding({ onboardUser, setSoundEnabled }: OnboardingProps) {
   // State management
   const [bootSequenceComplete, setBootSequenceComplete] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -27,6 +31,7 @@ function Onboarding({ onboardUser }: OnboardingProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [processingRegistration, setProcessingRegistration] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [soundEnabled, setSoundEnabledState] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [bootLines, setBootLines] = useState<string[]>([]);
@@ -475,13 +480,32 @@ function Onboarding({ onboardUser }: OnboardingProps) {
                 <p className="text-sm">
                   You now have access to the MR.RED terminal system.
                 </p>
+                
+                <div className="flex items-center justify-between mb-2 p-2 border border-green-600/30 bg-green-800/20 rounded">
+                  <span className="text-sm text-green-400">ENABLE AUDIO:</span>
+                  <div className="flex items-center">
+                    <Toggle 
+                      pressed={soundEnabled}
+                      onPressedChange={(pressed) => {
+                        setSoundEnabledState(pressed);
+                        if (setSoundEnabled) setSoundEnabled(pressed);
+                      }}
+                      className="data-[state=on]:bg-green-600 data-[state=off]:bg-red-800"
+                    >
+                      {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                    </Toggle>
+                  </div>
+                </div>
 
-                <a
-                  href="/"
-                  className="block w-full py-2 bg-green-800 hover:bg-green-700 text-white font-bold border border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-center"
+                <Button
+                  onClick={() => {
+                    if (setSoundEnabled) setSoundEnabled(soundEnabled);
+                    window.location.href = '/';
+                  }}
+                  className="w-full py-2 bg-green-800 hover:bg-green-700 text-white font-bold border border-green-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors"
                 >
                   PROCEED TO TERMINAL
-                </a>
+                </Button>
 
                 <p className="text-yellow-500 text-sm mt-4 border border-yellow-500/50 p-2 bg-yellow-500/10 rounded">
                   WARNING: ALL ACTIONS WITHIN THE TERMINAL ARE MONITORED AND

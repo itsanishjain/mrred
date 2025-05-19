@@ -6,8 +6,20 @@ import { TypeAnimation } from "react-type-animation";
 import { SecurityCheckList } from "./security-check-list";
 import { BinaryStream } from "./binary-stream";
 import { ProgressCircle } from "./progress-circle";
+import { Toggle } from "@/components/ui/toggle";
+import { VolumeX, Volume2 } from "lucide-react";
 
-export const LoadingScreen: React.FC = () => {
+interface LoadingScreenProps {
+  soundEnabled?: boolean;
+  onSoundToggle?: (enabled: boolean) => void;
+  showSoundOption?: boolean;
+}
+
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({
+  soundEnabled = true,
+  onSoundToggle,
+  showSoundOption = false
+}) => {
   const [progress, setProgress] = useState(0);
   const [securityChecks, setSecurityChecks] = useState<Record<string, string>>(
     {}
@@ -146,6 +158,26 @@ export const LoadingScreen: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Sound Option */}
+      {showSoundOption && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-4 right-4 z-50 bg-black/80 backdrop-blur-sm p-3 rounded-lg border border-red-800 shadow-lg"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-red-500">AUDIO:</span>
+            <Toggle 
+              pressed={soundEnabled}
+              onPressedChange={(pressed) => onSoundToggle && onSoundToggle(pressed)}
+              className="data-[state=on]:bg-red-600 data-[state=off]:bg-zinc-800"
+            >
+              {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </Toggle>
+          </div>
+        </motion.div>
+      )}
 
       {/* Bottom Status Bar */}
       <motion.div
