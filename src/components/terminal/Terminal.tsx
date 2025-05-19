@@ -6,7 +6,6 @@ import { useAccount } from "wagmi";
 import TypingText from "./TypingText";
 import MenuOption from "./MenuOption";
 import PostList from "./PostList";
-import PostItem from "./PostItem";
 import MediaUploadModal from "./MediaUploadModal";
 import { Ok, UnexpectedError } from "@lens-protocol/client";
 import { Paginated, AnyPost } from "@lens-protocol/client";
@@ -1127,26 +1126,6 @@ export const Terminal: React.FC<TerminalProps> = ({
                       />
                     </div>
                     <div className="menu-options">
-                      <MenuOption
-                        command="consume_propaganda"
-                        description="Access your daily dose of approved information streams"
-                        onClick={() => handleOptionClick("consume_propaganda")}
-                      />
-                      <MenuOption
-                        command="report_dissidence"
-                        description="Report unauthorized thoughts and behavior for immediate correction"
-                        onClick={() => handleOptionClick("report_dissidence")}
-                      />
-                      <MenuOption
-                        command="social_compliance"
-                        description="View your social credit score and compliance metrics"
-                        onClick={() => handleOptionClick("social_compliance")}
-                      />
-                      <MenuOption
-                        command="request_permission"
-                        description="Submit requests for basic human privileges"
-                        onClick={() => handleOptionClick("request_permission")}
-                      />
                       <MenuOption
                         command="command_line"
                         description="Access advanced terminal interface"
