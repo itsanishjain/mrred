@@ -87,9 +87,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   const [showOptions, setShowOptions] = useState(true);
   const [poweringUp, setPoweringUp] = useState(true);
   const [commandMode, setCommandMode] = useState(false);
-  const [soundActivated, setSoundActivated] = useState(false);
-  const [showSoundActivation, setShowSoundActivation] = useState(soundEnabled);
-  const [localSoundEnabled, setLocalSoundEnabled] = useState(soundEnabled);
+  const [localSoundEnabled, setLocalSoundEnabled] = useState(false);
   const [currentCommand, setCurrentCommand] = useState("");
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [commandOutput, setCommandOutput] = useState<string>("");
@@ -121,14 +119,6 @@ export const Terminal: React.FC<TerminalProps> = ({
       setPoweringUp(false);
     }, 1000);
   }, []);
-
-  // Function to activate sound with user interaction
-  const activateSound = () => {
-    // Play a silent sound to activate audio context
-    typewriterSound.play("type");
-    setSoundActivated(true);
-    setShowSoundActivation(false);
-  };
 
   // Function to toggle sound on/off
   const toggleSound = () => {
@@ -969,20 +959,6 @@ export const Terminal: React.FC<TerminalProps> = ({
         onClose={() => setShowMediaUploadModal(false)}
         onUpload={handleMediaUpload}
       />
-
-      {/* Sound Activation Button - Only shown if sound is enabled but not activated */}
-      {showSoundActivation && !soundActivated && (
-        <div className="fixed top-4 right-4 z-50 animate-pulse">
-          <button
-            onClick={activateSound}
-            className="bg-red-800 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium border border-red-600 shadow-lg flex items-center gap-2"
-          >
-            <span className="h-2 w-2 bg-red-500 rounded-full animate-ping absolute"></span>
-            <span className="h-2 w-2 bg-red-500 rounded-full relative"></span>
-            ACTIVATE AUDIO
-          </button>
-        </div>
-      )}
 
       <div className={`terminal-container ${poweringUp ? "powering-up" : ""}`}>
         <div className="terminal-content">
