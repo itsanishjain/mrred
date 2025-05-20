@@ -13,7 +13,7 @@ export const OnboardingTerminal = forwardRef<HTMLDivElement, TerminalProps>(
         {/* Terminal Header */}
         <div className="bg-gradient-to-r from-red-900 to-red-800 px-4 py-2 flex items-center justify-between">
           <div className="text-white font-mono font-bold tracking-wider text-sm">
-            MR.RED IDENTITY VERIFICATION v1.0
+            MR.RED IDENTITY VERIFICATION v3.0
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
