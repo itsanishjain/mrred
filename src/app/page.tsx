@@ -433,6 +433,32 @@ const App = () => {
     }
   };
 
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      const client = await getLensClient();
+      if (!client.isPublicClient()) {
+        const result = await client.logout();
+        console.log("User logged out successfully");
+        // Reset state to show onboarding after logout
+        setShowOnboarding(true);
+        setSoundChoiceMade(false);
+        // Reset any other necessary state
+        setIsAuthChecking(false);
+      } else {
+        console.log("No active session to logout from");
+        // Even if there's no active session, we still want to go back to onboarding
+        setShowOnboarding(true);
+        setSoundChoiceMade(false);
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Even on error, redirect to onboarding for better UX
+      setShowOnboarding(true);
+      setSoundChoiceMade(false);
+    }
+  };
+
   // Check if user is authenticated
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -443,7 +469,9 @@ const App = () => {
         if (resumed.isOk()) {
           console.log("User is authenticated");
           // User is authenticated, but we need to check if they've made a sound choice
-          const savedSoundPreference = localStorage.getItem("mrred_sound_enabled");
+          const savedSoundPreference = localStorage.getItem(
+            "mrred_sound_enabled"
+          );
           if (savedSoundPreference !== null) {
             setSoundEnabled(savedSoundPreference === "true");
             setSoundChoiceMade(true);
@@ -550,6 +578,7 @@ const App = () => {
           fetchUserFeed={fetchUserFeed}
           toggleReaction={toggleReaction}
           fetchPostComments={fetchPostComments}
+          handleLogout={handleLogout}
           soundEnabled={soundEnabled}
           onSoundToggle={handleSoundToggle}
         />

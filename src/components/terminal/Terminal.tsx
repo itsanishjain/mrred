@@ -40,6 +40,7 @@ interface TerminalProps {
   fetchPostComments?: (
     postId: string
   ) => Promise<Paginated<AnyPost> | undefined>;
+  handleLogout?: () => Promise<void>;
   soundEnabled?: boolean;
   onSoundToggle?: (enabled: boolean) => void;
 }
@@ -78,6 +79,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   fetchUserFeed,
   toggleReaction,
   fetchPostComments,
+  handleLogout,
   soundEnabled = true,
   onSoundToggle,
 }) => {
@@ -193,6 +195,7 @@ export const Terminal: React.FC<TerminalProps> = ({
       "Create a post with an image (Usage: create-post --media <your post content>)",
     "fetch-feed": "Fetch your personalized feed",
     "load-more-feed": "Load more posts from your feed",
+    logout: "Logout from your account and return to onboarding",
     exit: "Exit command mode",
   };
 
@@ -877,6 +880,28 @@ export const Terminal: React.FC<TerminalProps> = ({
 
         case "exit":
           setCommandMode(false);
+          setProcessingCommand(false);
+          return;
+          
+        case "logout":
+          output = "INITIATING LOGOUT SEQUENCE...\nTerminating current session.";
+          setCommandOutput(output);
+          
+          if (handleLogout) {
+            try {
+              // Add a slight delay for the terminal effect
+              setTimeout(async () => {
+                await handleLogout();
+                // The redirect will be handled in the App component
+              }, 1500);
+            } catch (error) {
+              output = `LOGOUT ERROR: ${error instanceof Error ? error.message : "Unknown error"}`;
+              setCommandOutput(output);
+            }
+          } else {
+            output = "LOGOUT FUNCTION NOT AVAILABLE";
+            setCommandOutput(output);
+          }
           setProcessingCommand(false);
           return;
 
