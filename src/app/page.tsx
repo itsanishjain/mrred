@@ -4,7 +4,6 @@ import { postId, PostReferenceType } from "@lens-protocol/client";
 import { signMessageWith } from "@lens-protocol/client/viem";
 import { uri, evmAddress } from "@lens-protocol/client";
 import {
-  MetadataAttributeType,
   account,
   textOnly,
   image,
@@ -34,7 +33,7 @@ import { LoadingScreen } from "@/components/terminal-loading";
 import { PageTransition } from "@/components/transitions/PageTransition";
 
 const DEBUG_BUTTONS = false;
-const DELAY = 0;
+const DELAY = 7000;
 
 const App = () => {
   // State to track whether to show onboarding or terminal

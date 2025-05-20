@@ -1017,10 +1017,15 @@ export const Terminal: React.FC<TerminalProps> = ({
                   {localSoundEnabled ? "SOUND: ON" : "SOUND: OFF"}
                 </button>
               </div>
-              <div className="terminal-controls">
+              {/* <div className="terminal-controls">
                 <div className="control minimize"></div>
                 <div className="control maximize"></div>
                 <div className="control close"></div>
+              </div> */}
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
               </div>
             </div>
           </div>
