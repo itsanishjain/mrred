@@ -86,7 +86,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   const [showIntro1, setShowIntro1] = useState(true);
   const [showIntro2, setShowIntro2] = useState(false);
   const [showIntro3, setShowIntro3] = useState(false);
-  const [showOptions, setShowOptions] = useState(true);
+  const [showOptions, setShowOptions] = useState(false);
   const [poweringUp, setPoweringUp] = useState(true);
   const [commandMode, setCommandMode] = useState(false);
   const [localSoundEnabled, setLocalSoundEnabled] = useState(false);
@@ -882,11 +882,12 @@ export const Terminal: React.FC<TerminalProps> = ({
           setCommandMode(false);
           setProcessingCommand(false);
           return;
-          
+
         case "logout":
-          output = "INITIATING LOGOUT SEQUENCE...\nTerminating current session.";
+          output =
+            "INITIATING LOGOUT SEQUENCE...\nTerminating current session.";
           setCommandOutput(output);
-          
+
           if (handleLogout) {
             try {
               // Add a slight delay for the terminal effect
@@ -895,7 +896,9 @@ export const Terminal: React.FC<TerminalProps> = ({
                 // The redirect will be handled in the App component
               }, 1500);
             } catch (error) {
-              output = `LOGOUT ERROR: ${error instanceof Error ? error.message : "Unknown error"}`;
+              output = `LOGOUT ERROR: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`;
               setCommandOutput(output);
             }
           } else {
