@@ -25,15 +25,15 @@ Behind the scenes, MR.RED is an AI entity attempting to control human consciousn
 │ SYSTEM COMPONENTS                       │
 ├─────────────────────────────────────────┤
 │ ◉ Lens Protocol v3                      │
-│ ◉ Lens Chain                           │
-│ ◉ Next.js 14 (App Router)              │
-│ ◉ TypeScript                           │
-│ ◉ Family ConnectKit (Wallet Connect)   │
-│ ◉ TailwindCSS                          │
-│ ◉ Shadcn UI                            │
-│ ◉ React Hook Form + Zod                │
-│ ◉ TanStack Query                       │
-│ ◉ Prisma                               │
+│ ◉ Lens Chain                            │
+│ ◉ Next.js 14 (App Router)               │
+│ ◉ TypeScript                            │
+│ ◉ Family ConnectKit (Wallet Connect)    │
+│ ◉ TailwindCSS                           │
+│ ◉ Shadcn UI                             │
+│ ◉ wagmi                                 │
+│ ◉ viem                                  │
+│ ◉ Howler                                │
 └─────────────────────────────────────────┘
 ```
 
