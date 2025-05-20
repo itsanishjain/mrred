@@ -879,8 +879,14 @@ export const Terminal: React.FC<TerminalProps> = ({
           break;
 
         case "exit":
+          // Reset all states when exiting command mode
           setCommandMode(false);
           setProcessingCommand(false);
+          // Reset intro animation states to ensure proper sequence on re-entry
+          setShowIntro1(true);
+          setShowIntro2(false);
+          setShowIntro3(false);
+          setShowOptions(false);
           return;
 
         case "logout":
